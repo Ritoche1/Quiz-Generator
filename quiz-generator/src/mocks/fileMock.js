@@ -1,0 +1,2 @@
+// langage: javascript
+module.exports = "";

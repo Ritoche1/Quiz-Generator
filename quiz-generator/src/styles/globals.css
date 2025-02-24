@@ -1,0 +1,32 @@
+/* src/styles/globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Smooth gradient transitions */
+:root {
+  --bg-start: #3b82f6;
+  --bg-end: #6366f1;
+}
+
+.gradient-bg {
+  background: linear-gradient(135deg, var(--bg-start), var(--bg-end));
+  background-size: 200% 200%;
+  transition: --bg-start 2s, --bg-end 2s;
+}
+
+/* Dynamic background colors */
+.bg-default {
+  --bg-start: #3b82f6;
+  --bg-end: #6366f1;
+}
+
+.bg-correct {
+  --bg-start: #6366f1;
+  --bg-end: #22c55e;
+}
+
+.bg-incorrect {
+  --bg-start: #6366f1;
+  --bg-end: #ef4444;
+}

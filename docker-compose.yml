@@ -1,0 +1,14 @@
+version: '3'
+services:
+  frontend:
+    build: ./quiz-generator
+    ports:
+      - '3000:3000'
+    depends_on:
+      - backend
+  backend:
+    build: ./quiz-generator-backend
+    ports:
+      - '5000:5000'
+    env_file:
+      - .env
