@@ -1,125 +1,131 @@
-# Quiz-Generator
+# Quiz Generator
 
-Quiz Generator powered by Mistral AI. Ce projet permet de générer des quiz personnalisés en fonction d'un sujet et d'une difficulté, en utilisant FastAPI pour le backend et Next.js pour le frontend.
+Quiz Generator powered by Mistral AI. This project allows you to generate customized quizzes based on a topic and difficulty level, using FastAPI for the backend and Next.js for the frontend.
 
-## Table des Matières
+## Table of Contents
 
-- [Présentation](#présentation)
-- [Fonctionnalités](#fonctionnalités)
-- [Architecture du Projet](#architecture-du-projet)
-- [Prérequis](#prérequis)
-- [Installation et Lancement](#installation-et-lancement)
-  - [Lancement en Local](#lancement-en-local)
-  - [Lancement avec Docker](#lancement-avec-docker)
-- [Structure du Projet](#structure-du-projet)
-- [Tests Frontend](#tests-frontend)
+- [Presentation](#presentation)
+- [Features](#features)
+- [Project Architecture](#project-architecture)
+- [Prerequisites](#prerequisites)
+- [Installation and Launch](#installation-and-launch)
+  - [Local Launch](#local-launch)
+  - [Launch with Docker](#launch-with-docker)
+- [Project Structure](#project-structure)
+- [Frontend Testing](#frontend-testing)
 - [Contribution](#contribution)
-- [Licence](#licence)
+- [License](#license)
 
-## Présentation
+## Presentation
 
-Ce projet est un générateur de quiz interactif qui tire parti de l'IA Mistral pour créer des questionnaires personnalisés. Il se compose de deux parties distinctes :
+This project is an interactive quiz generator that leverages Mistral AI to create personalized questionnaires. It consists of two distinct parts:
 
-- **Frontend** : Une application Next.js se trouvant dans le dossier [quiz-generator](quiz-generator/), qui gère l'interface utilisateur et la logique d'affichage des quiz.
-- **Backend** : Une API REST réalisée avec FastAPI se trouvant dans le dossier [quiz-generator-backend](quiz-generator-backend/), qui communique avec l'API de Mistral pour générer les questions.
+- **Frontend**: A Next.js application located in the [quiz-generator](quiz-generator/) folder, which manages the user interface and quiz display logic.
+- **Backend**: A REST API built with FastAPI located in the [quiz-generator-backend](quiz-generator-backend/) folder, which communicates with the Mistral API to generate questions.
 
-## Fonctionnalités
+## Features
 
-- Génération de quiz personnalisés selon le sujet et la difficulté.
-- Interface utilisateur réactive via Next.js et Tailwind CSS ([src/styles/globals.css](quiz-generator/src/styles/globals.css)).
-- Communication avec une API tierce (Mistral AI) pour récupérer le contenu dynamique des quiz.
-- Support de CORS pour faciliter la communication entre le frontend et le backend.
-- Exposition d'un point de contrôle `/ping` pour vérifier la disponibilité du backend.
+- Generation of customized quizzes based on topic and difficulty.
+- Responsive user interface powered by Next.js and Tailwind CSS ([src/styles/globals.css](quiz-generator/src/styles/globals.css)).
+- Communication with a third-party API (Mistral AI) to retrieve dynamic quiz content.
+- CORS support to facilitate communication between the frontend and backend.
+- A `/ping` endpoint to check backend availability.
 
-## Architecture du Projet
+## Project Architecture
 
-- **Frontend** : Développé avec Next.js. Le point d'entrée se trouve dans [quiz-generator/src/app/page.js](quiz-generator/src/app/page.js).
-- **Backend** : Implémenté avec FastAPI. Le fichier principal est [quiz-generator-backend/main.py](quiz-generator-backend/main.py).
+- **Frontend**: Developed with Next.js. The entry point is located in [quiz-generator/src/app/page.js](quiz-generator/src/app/page.js).
+- **Backend**: Implemented with FastAPI. The main file is [quiz-generator-backend/main.py](quiz-generator-backend/main.py).
 
-## Prérequis
+## Prerequisites
 
-- Node.js (version 18 ou supérieure) pour le frontend.
-- Python 3.11 pour le backend.
-- Docker et Docker Compose (facultatif, pour exécuter l'ensemble du projet en conteneur).
+- Node.js (version 18 or higher) for the frontend.
+- Python 3.11 for the backend.
+- Docker and Docker Compose (optional, for running the entire project in containers).
+- **Environment Configuration:** Ensure you have a `.env` file at the root of the project with your `MISTRAL_API_KEY`. For example:
 
-## Installation et Lancement
+```env
+  MISTRAL_API_KEY=your_api_key_here
+```
 
-### Lancement en Local
+## Installation and Launch
+
+### Local Launch
 
 1. **Backend**  
-   - Rendez-vous dans le dossier `quiz-generator-backend` :
+   - Navigate to the `quiz-generator-backend` folder:
      
      ```bash
      cd quiz-generator-backend
      ```
-   - Installez les dépendances Python :
+   - Install the Python dependencies:
      
      ```bash
-     pip install fastapi uvicorn mistralai
+     pip install -r requirements.txt
      ```
-   - Lancez le serveur FastAPI :
+   - Start the FastAPI server:
      
      ```bash
-     uvicorn main:app --host 0.0.0.0 --port 5000
+     python -m uvicorn main:app --host 0.0.0.0 --port 5000
      ```
 
 2. **Frontend**  
-   - Rendez-vous dans le dossier [quiz-generator](quiz-generator/) :
+   - Navigate to the quiz-generator folder:
      
      ```bash
      cd quiz-generator
      ```
-   - Installez les dépendances Node :
+   - Install the Node.js dependencies:
      
      ```bash
      npm install
      ```
-   - Lancez les tests pour vérifier le bon fonctionnement du frontend :
+   - Run tests to verify the proper functioning of the frontend:
      
      ```bash
      npm test
      ```
-   - Lancez l'application Next.js :
+   - Start the Next.js application:
      
      ```bash
      npm run dev
      ```
 
-### Lancement avec Docker
+### Launch with Docker
 
-Le projet fournit un fichier [docker-compose.yml](docker-compose.yml) à la racine ainsi que des Dockerfile pour chaque partie. La construction de l'image Frontend intègre désormais l'exécution des tests.  
-Ainsi, lors de la construction de l'image, si les tests échouent, le build sera interrompu.
+The project includes a [docker-compose.yml](http://_vscodecontentref_/0) file at the root along with Dockerfiles for each part. The construction of the Frontend image now includes running tests.  
+Thus, during the image build, if any tests fail, the build will be interrupted.
 
-1. Assurez-vous que Docker est installé et en cours d'exécution.
-2. Pour le Backend, le Dockerfile se trouve dans `quiz-generator-backend/`.
-3. Pour le Frontend, le Dockerfile dans `quiz-generator/` inclut les étapes suivantes :
-   - Installation des dépendances Node.
-   - Exécution des tests via `npm run test` (si les tests échouent, le build échoue).
-   - Démarrage de l'application avec `npm run dev`.
+1. Ensure that Docker is installed and running.
+2. For the Backend, the Dockerfile is located in [quiz-generator-backend](http://_vscodecontentref_/1).
+3. For the Frontend, the Dockerfile in [quiz-generator](http://_vscodecontentref_/2) includes the following steps:
+   - Installation of Node.js dependencies.
+   - Execution of tests via `npm run test` (if tests fail, the build fails).
+   - Launching the application with `npm run dev`.
 
-4. Lancez l'ensemble des services avec Docker Compose :
+4. Launch all services with Docker Compose:
    
    ```bash
    docker-compose up --build -d
    ```
 
-Le service Frontend sera accessible sur le port 3000 et le Backend sur le port 5000.
 
-## Structure du Projet
+> The Frontend service will be accessible on port **3000** and the Backend on port **5000**.
+
+## Project Structure
 
 ```
 Quiz-Generator/
 ├── .gitignore
 ├── docker-compose.yml
 ├── README.md
-├── next.config.mjs              # Configuration Next.js
-├── jest.config.js               # Configuration de Jest
-├── jest.setup.js                # Setup pour Jest
-├── package.json                 # Dépendances et scripts (build, dev, test, etc.)
-├── postcss.config.mjs           # Configuration PostCSS
-├── tailwind.config.js           # Configuration Tailwind CSS
-├── quiz-generator/              # Frontend Next.js
-│   ├── Dockerfile               # Dockerfile pour le frontend (tests inclus)
+├── next.config.mjs              # Next.js configuration
+├── jest.config.js               # Jest configuration
+├── jest.setup.js                # Jest setup
+├── package.json                 # Dependencies and scripts (build, dev, test, etc.)
+├── postcss.config.mjs           # PostCSS configuration
+├── tailwind.config.js           # Tailwind CSS configuration
+├── quiz-generator/              # Next.js Frontend
+│   ├── Dockerfile               # Dockerfile for the frontend (tests included)
 │   ├── package.json
 │   ├── next.config.mjs
 │   ├── public/
@@ -131,32 +137,32 @@ Quiz-Generator/
 │   │   │   ├── QuizGenerator.js
 │   │   │   ├── QuizQuestion.js
 │   │   │   └── QuizRecap.js
-│   │   └── __tests__/         # Tests unitaires frontend
+│   │   └── __tests__/         # Frontend unit tests
 │   │       ├── page.test.js
 │   │       ├── QuizGenerator.test.jsx
 │   │       └── QuizQuestion.test.js
 │   └── styles/                  
-└── quiz-generator-backend/      # Backend FastAPI
-    ├── Dockerfile               # Dockerfile pour le backend
+└── quiz-generator-backend/      # FastAPI Backend
+    ├── Dockerfile               # Dockerfile for the backend
     ├── main.py
     └── README.md
 ```
 
-## Tests Frontend
+## Frontend Testing
 
-Les tests unitaires du frontend sont exécutés avec Jest et React Testing Library. Pour lancer vos tests localement, rendez-vous dans le dossier `quiz-generator` et exécutez :
+The frontend unit tests are executed with Jest and React Testing Library. To run tests locally, navigate to the quiz-generator folder and execute:
 
 ```bash
 npm test
 ```
 
-Dans le Dockerfile du frontend, la commande `RUN npm run test` est exécutée pendant le build pour s'assurer que l'image ne sera construite que si l'ensemble des tests passent.
+In the frontend Dockerfile, the command `RUN npm run test` is executed during the build to ensure that the image is only built if all tests pass.
 
 ## Contribution
 
-Les contributions sont les bienvenues !  
-Merci de soumettre une "issue" ou un "pull request" pour toute amélioration ou correction.
+Contributions are welcome!
+Please submit an issue or a pull request for any improvements or fixes.
 
-## Licence
+## License
 
-Ce projet est sous licence MIT.
+This project is licensed under the MIT License.
