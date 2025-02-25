@@ -5,5 +5,5 @@ RUN npm install
 COPY . .
 RUN npm run test
 RUN npm run build
-EXPOSE 3000
+EXPOSE 83
 CMD ["npm", "run", "start"]

@@ -10,17 +10,17 @@ import json
 
 app = FastAPI()
 
-# Enable CORS
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],  # Allow requests from your frontend
+    allow_origins=["http://2.12.244.24:83"],
     allow_credentials=True,
-    allow_methods=["*"],  # Allow all methods (GET, POST, etc.)
-    allow_headers=["*"],  # Allow all headers
+    allow_methods=["*"],
+    allow_headers=["*"]
 )
 
-# Initialize Mistral client
-api_key =  os.getenv('MISTRAL_API_KEY')  # Replace with your actual API key
+
+api_key =  os.getenv('MISTRAL_API_KEY')
 if not api_key:
     raise ValueError("MISTRAL_API_KEY environment variable is not set")
 model = "mistral-large-latest"

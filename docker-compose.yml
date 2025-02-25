@@ -3,12 +3,19 @@ services:
   frontend:
     build: ./quiz-generator
     ports:
-      - '3000:3000'
+      - '83:83'
     depends_on:
       - backend
+    networks:
+      - quiz-net
   backend:
     build: ./quiz-generator-backend
     ports:
       - '5000:5000'
     env_file:
       - .env
+    networks:
+      - quiz-net
+
+networks:
+  quiz-net:

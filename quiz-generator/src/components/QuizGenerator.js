@@ -10,7 +10,7 @@ export default function QuizGenerator({ onGenerate }) {
 
   const canPing = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:5000/ping', { // Port 5000
+      const response = await fetch('http://2.12.244.24:5000/ping', { // Port 5000
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -28,7 +28,7 @@ export default function QuizGenerator({ onGenerate }) {
         console.log('Cannot ping server');
         return;
       }
-      const response = await fetch('http://127.0.0.1:5000/generate-quiz', { // Port 5000
+      const response = await fetch('http://2.12.244.24:5000/generate-quiz', { // Port 5000
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
