@@ -5,7 +5,11 @@ Quiz Generator powered by Mistral AI. This project allows you to generate custom
 ## Table of Contents
 
 - [Presentation](#presentation)
-- [Features](#features)
+- [Setup Instructions](#setup-instructions)
+- [Usage Guide](#usage-guide)
+- [Technologies Used](#technologies-used)
+- [Project Features](#project-features)
+- [How It Integrates with Mistral AI's Technology](#how-it-integrates-with-mistral-ais-technology)
 - [Project Architecture](#project-architecture)
 - [Prerequisites](#prerequisites)
 - [Installation and Launch](#installation-and-launch)
@@ -23,93 +27,143 @@ This project is an interactive quiz generator that leverages Mistral AI to creat
 - **Frontend**: A Next.js application located in the [quiz-generator](quiz-generator/) folder, which manages the user interface and quiz display logic.
 - **Backend**: A REST API built with FastAPI located in the [quiz-generator-backend](quiz-generator-backend/) folder, which communicates with the Mistral API to generate questions.
 
-## Features
+## Setup Instructions
 
-- Generation of customized quizzes based on topic and difficulty.
-- Responsive user interface powered by Next.js and Tailwind CSS ([src/styles/globals.css](quiz-generator/src/styles/globals.css)).
-- Communication with a third-party API (Mistral AI) to retrieve dynamic quiz content.
-- CORS support to facilitate communication between the frontend and backend.
-- A `/ping` endpoint to check backend availability.
+1. **Clone the Repository**  
+   Clone this repository to your local machine.
+
+2. **Prerequisites**  
+   - Ensure you have [Node.js](https://nodejs.org) (v18 or higher) and [Python 3.11](https://www.python.org/downloads/) installed.
+   - Install Docker and Docker Compose if you prefer containerized deployment.
+   - Create a `.env` file at the root with your Mistral API key:
+     ```env
+     MISTRAL_API_KEY=your_api_key_here
+     ```
+
+3. **Install Dependencies**  
+   - For the backend, navigate to quiz-generator-backend and run:
+     ```bash
+     pip install -r requirements.txt
+     ```
+   - For the frontend, navigate to quiz-generator and run:
+     ```bash
+     npm install
+     ```
+
+## Usage Guide
+
+1. **Running Locally**  
+   - **Backend:**  
+     Navigate to quiz-generator-backend and start the FastAPI server:
+     ```bash
+     python -m uvicorn main:app --host 0.0.0.0 --port 5000
+     ```
+   - **Frontend:**  
+     Navigate to quiz-generator and run:
+     ```bash
+     npm run dev
+     ```
+     Open [http://localhost:83](http://localhost:83) in your browser.
+
+2. **Using Docker**  
+   Build and run the containers using Docker Compose:
+   ```bash
+   docker-compose up --build -d
+   ```
+   The frontend is accessible on port **83** and the backend on port **5000**.
+
+## Technologies Used
+
+- **Frontend:**  
+  Next.js, React, Tailwind CSS, Jest & React Testing Library  
+  (See src/app/page.js for the entry point and src/styles/globals.css for styling.)
+
+- **Backend:**  
+  FastAPI, uvicorn, Python Dotenv, Mistralai (Mistral AI client)  
+  (See main.py for the FastAPI implementation.)
+
+- **Containerization:**  
+  Docker and Docker Compose
+
+## Project Features
+
+- **Customized Quiz Generation:**  
+  Create quizzes based on topic and difficulty selections.
+
+- **Dynamic User Interface:**  
+  Responsive UI built with Next.js and styled with Tailwind CSS.
+
+- **Backend API:**  
+  FastAPI powered backend that communicates with Mistral AI to generate quiz content.
+
+- **Automated Testing:**  
+  Frontend tests using Jest ensure reliability before deployment.
+
+- **Error Handling & Feedback:**  
+  User-friendly error messages and visual feedback on answer submissions.
+
+## How It Integrates with Mistral AI's Technology
+
+The backend interacts with Mistral AI using the `mistralai` client. When a quiz is requested, the backend sends a prompt that includes the desired difficulty and topic to Mistral AI's API. The response is then parsed and presented dynamically on the frontend. This integration is outlined in main.py.
 
 ## Project Architecture
 
-- **Frontend**: Developed with Next.js. The entry point is located in [quiz-generator/src/app/page.js](quiz-generator/src/app/page.js).
-- **Backend**: Implemented with FastAPI. The main file is [quiz-generator-backend/main.py](quiz-generator-backend/main.py).
+- **Frontend:**  
+  Developed with Next.js, with the entry point at page.js.
+
+- **Backend:**  
+  Implemented with FastAPI. Refer to main.py.
 
 ## Prerequisites
 
-- Node.js (version 18 or higher) for the frontend.
+- Node.js (v18 or higher) for the frontend.
 - Python 3.11 for the backend.
-- Docker and Docker Compose (optional, for running the entire project in containers).
-- **Environment Configuration:** Ensure you have a `.env` file at the root of the project with your `MISTRAL_API_KEY`. For example:
-
-```env
-  MISTRAL_API_KEY=your_api_key_here
-```
+- Docker and Docker Compose (optional, for containerized deployment).
 
 ## Installation and Launch
 
 ### Local Launch
 
 1. **Backend**  
-   - Navigate to the `quiz-generator-backend` folder:
-     
+   - Navigate to the quiz-generator-backend folder:
      ```bash
      cd quiz-generator-backend
      ```
-   - Install the Python dependencies:
-     
+   - Install the dependencies:
      ```bash
      pip install -r requirements.txt
      ```
-   - Start the FastAPI server:
-     
+   - Start the server:
      ```bash
      python -m uvicorn main:app --host 0.0.0.0 --port 5000
      ```
 
 2. **Frontend**  
    - Navigate to the quiz-generator folder:
-     
      ```bash
      cd quiz-generator
      ```
-   - Install the Node.js dependencies:
-     
+   - Install the dependencies:
      ```bash
      npm install
      ```
-   - Run tests to verify the proper functioning of the frontend:
-     
+   - Run tests:
      ```bash
      npm test
      ```
-   - Start the Next.js application:
-     
+   - Start the application:
      ```bash
      npm run dev
      ```
 
 ### Launch with Docker
 
-The project includes a [docker-compose.yml](http://_vscodecontentref_/0) file at the root along with Dockerfiles for each part. The construction of the Frontend image now includes running tests.  
-Thus, during the image build, if any tests fail, the build will be interrupted.
-
-1. Ensure that Docker is installed and running.
-2. For the Backend, the Dockerfile is located in [quiz-generator-backend](http://_vscodecontentref_/1).
-3. For the Frontend, the Dockerfile in [quiz-generator](http://_vscodecontentref_/2) includes the following steps:
-   - Installation of Node.js dependencies.
-   - Execution of tests via `npm run test` (if tests fail, the build fails).
-   - Launching the application with `npm run dev`.
-
-4. Launch all services with Docker Compose:
-   
+1. Make sure Docker is installed and running.
+2. Use Docker Compose from the project root:
    ```bash
    docker-compose up --build -d
    ```
-
-
-> The Frontend service will be accessible on port **3000** and the Backend on port **5000**.
+   The frontend will be available on port **83** and the backend on port **5000**.
 
 ## Project Structure
 
@@ -121,11 +175,11 @@ Quiz-Generator/
 ├── next.config.mjs              # Next.js configuration
 ├── jest.config.js               # Jest configuration
 ├── jest.setup.js                # Jest setup
-├── package.json                 # Dependencies and scripts (build, dev, test, etc.)
+├── package.json                 # Dependencies and scripts
 ├── postcss.config.mjs           # PostCSS configuration
 ├── tailwind.config.js           # Tailwind CSS configuration
 ├── quiz-generator/              # Next.js Frontend
-│   ├── Dockerfile               # Dockerfile for the frontend (tests included)
+│   ├── Dockerfile               # Frontend Dockerfile (includes tests)
 │   ├── package.json
 │   ├── next.config.mjs
 │   ├── public/
@@ -137,30 +191,30 @@ Quiz-Generator/
 │   │   │   ├── QuizGenerator.js
 │   │   │   ├── QuizQuestion.js
 │   │   │   └── QuizRecap.js
-│   │   └── __tests__/         # Frontend unit tests
+│   │   └── __tests__/           # Frontend unit tests
 │   │       ├── page.test.js
 │   │       ├── QuizGenerator.test.jsx
 │   │       └── QuizQuestion.test.js
 │   └── styles/                  
 └── quiz-generator-backend/      # FastAPI Backend
-    ├── Dockerfile               # Dockerfile for the backend
+    ├── Dockerfile               # Backend Dockerfile
     ├── main.py
     └── README.md
 ```
 
 ## Frontend Testing
 
-The frontend unit tests are executed with Jest and React Testing Library. To run tests locally, navigate to the quiz-generator folder and execute:
+The frontend tests are executed using Jest and React Testing Library. To run tests locally, navigate to the quiz-generator folder and run:
 
 ```bash
 npm test
 ```
 
-In the frontend Dockerfile, the command `RUN npm run test` is executed during the build to ensure that the image is only built if all tests pass.
+The Dockerfile for the frontend also runs tests during the build process to ensure a stable build.
 
 ## Contribution
 
-Contributions are welcome!
+Contributions are welcome!  
 Please submit an issue or a pull request for any improvements or fixes.
 
 ## License
