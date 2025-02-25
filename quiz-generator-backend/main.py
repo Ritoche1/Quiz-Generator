@@ -30,14 +30,35 @@ client = Mistral(api_key=api_key)
 class QuizRequest(BaseModel):
     topic: str
     difficulty: str
+    language: str = "English"
 
 @app.post("/generate-quiz")
 async def generate_quiz(request: QuizRequest):
     try:
         # Define the prompt for Mistral
         prompt = (
-            f"Generate a {request.difficulty} quiz on {request.topic} with 5 questions and 4 options each and the answer must be here. "
-            'Return the questions and options in JSON format, wrapped in ```json { "quiz": { "questions": [{"question": "What is the capital of France?","options": ["Berlin", "Madrid", "Paris", "Rome"],"answer": "Paris"}]}} ```.'
+            "Generate a " + request.difficulty + " quiz on " + request.topic + " in " + request.language + " with 5 questions and 4 options each.\n\n"
+            "Requirements:\n"
+            "- Questions should be accurate, clear, and appropriate for " + request.difficulty + " level\n"
+            "- Each question must have exactly 4 options with only one correct answer\n"
+            "- Ensure options are plausible and distinct from each other\n"
+            "- Include a mix of question types (factual, conceptual, analytical)\n"
+            "- Provide accurate answers for each question\n\n"
+            "Return the questions and options in JSON format, wrapped in:\n"
+            "```json\n"
+            "{\n"
+            "\"quiz\": {\n"
+            "\"questions\": [\n"
+            "{\n"
+            "\"question\": \"What is the capital of France?\",\n"
+            "\"options\": [\"Berlin\", \"Madrid\", \"Paris\", \"Rome\"],\n"
+            "\"answer\": \"Paris\"\n"
+            "},\n"
+            "... 4 more questions ...\n"
+            "]\n"
+            "}\n"
+            "}\n"
+            "```"
         )
 
         # Call Mistral's API
