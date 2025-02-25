@@ -16,7 +16,6 @@ export default function Home({ initialQuiz = null}) {
   const [error, setError] = useState(null);
 
   const handleGenerate = (quizData) => {
-    console.log('Quiz Data Received:', quizData);
     if (!quizData || !quizData.questions || quizData.questions.length === 0) {
       setError('No questions found. Please try again.');
       return;

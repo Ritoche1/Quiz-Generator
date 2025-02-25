@@ -13,7 +13,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://2.12.244.24:83"],
+    allow_origins=["http://ritoche.site", "https://ritoche.site"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
