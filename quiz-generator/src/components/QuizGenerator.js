@@ -3,7 +3,9 @@
 import { useState } from 'react';
 
 export default function QuizGenerator({ onGenerate }) {
+  const languages = ['English', 'Spanish', 'French', 'German', 'Italian', 'Portuguese', 'Dutch', 'Russian', 'Japanese', 'Korean', 'Chinese', 'Arabic', 'Hindi', 'Turkish', 'Polish'];
   const [topic, setTopic] = useState('');
+  const [language, setLanguage] = useState(languages[0]);
   const [difficulty, setDifficulty] = useState('easy');
   const [loading, setLoading] = useState(false);
 
@@ -33,7 +35,7 @@ export default function QuizGenerator({ onGenerate }) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ topic, difficulty }),
+        body: JSON.stringify({ topic, difficulty, language }),
       });
       const data = await response.json();
       onGenerate(data.quiz);
@@ -61,6 +63,17 @@ export default function QuizGenerator({ onGenerate }) {
         <option value="easy">Easy</option>
         <option value="medium">Medium</option>
         <option value="hard">Hard</option>
+      </select>
+      <select
+        value={language}
+        onChange={(e) => setLanguage(e.target.value)}
+        className="w-full p-2 mb-4 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+        {languages.map((language) => (
+          <option key={language} value={language}>
+            {language}
+          </option>
+        ))}
       </select>
       <button
         onClick={handleGenerate}
