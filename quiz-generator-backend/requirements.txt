@@ -2,3 +2,5 @@ fastapi
 uvicorn
 mistralai
 python-dotenv
+asyncpg
+sqlalchemy

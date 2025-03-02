@@ -1,6 +1,11 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
+
+const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+
 export default function QuizRecap({ quiz, selectedAnswers, onRestart }) {
+  const didMountRef = useRef(false);
   const calculateScore = () => {
     let score = 0;
     quiz.questions.forEach((question, index) => {
@@ -10,6 +15,35 @@ export default function QuizRecap({ quiz, selectedAnswers, onRestart }) {
     });
     return score;
   };
+
+  useEffect(() => {
+    if (didMountRef.current) return;
+    didMountRef.current = true;
+
+    const submitQuizAttempt = async () => {
+      try {
+        console.log(quiz);
+        const response = await fetch(`${baseUrl}/quizzes`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title : quiz.title,
+            description : "Quiz about " + quiz.title + " with " + quiz.questions.length + " questions in "  + quiz.difficulty + " difficulty in " + quiz.language + " language",
+            language : quiz.language,
+            questions : quiz.questions,
+          })
+        });
+        
+        if (!response.ok) throw new Error('Failed to save attempt');
+      } catch (error) {
+        console.error('Error submitting quiz attempt:', error);
+      }
+    };
+
+    if (quiz.questions.length > 0) {
+      submitQuizAttempt();
+    }
+  }, []);
 
   return (
     <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-lg text-black">
