@@ -1,6 +1,6 @@
 # Quiz Generator
 
-Quiz Generator powered by Mistral AI. This project allows you to generate customized quizzes based on a topic and difficulty level, using FastAPI for the backend and Next.js for the frontend.
+Quiz Generator powered by Mistral AI. This project allows you to generate customized quizzes based on a topic, language and difficulty level, using FastAPI for the backend and Next.js for the frontend.
 
 ## Table of Contents
 
