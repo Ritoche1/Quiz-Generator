@@ -1,7 +1,7 @@
 from pydantic import BaseModel
+from datetime import datetime
 
 class ScoreCreate(BaseModel):
-    user_id: str
     score: int
     max_score: int
     answers: dict
@@ -9,7 +9,7 @@ class ScoreCreate(BaseModel):
 class ScoreResponse(BaseModel):
     id: int
     quiz_id: int
-    user_id: str
+    user_id: int
     score: int
     max_score: int
-    created_at: str
+    created_at: datetime

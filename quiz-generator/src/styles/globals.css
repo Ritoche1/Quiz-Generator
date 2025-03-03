@@ -5,20 +5,20 @@
 
 /* Smooth gradient transitions */
 :root {
-  --bg-start: #3b82f6;
-  --bg-end: #6366f1;
+  --bg-start: #2B86C5;
+  --bg-middle: #784BA0;
+  --bg-end: #FF3CAC;
 }
 
 .gradient-bg {
-  background: linear-gradient(135deg, var(--bg-start), var(--bg-end));
-  background-size: 200% 200%;
+  background: linear-gradient(135deg, var(--bg-start), var(--bg-middle), var(--bg-end));
   transition: --bg-start 2s, --bg-end 2s;
 }
 
 /* Dynamic background colors */
 .bg-default {
-  --bg-start: #3b82f6;
-  --bg-end: #6366f1;
+  --bg-start: #2B86C5;
+  --bg-end: #FF3CAC;
 }
 
 .bg-correct {

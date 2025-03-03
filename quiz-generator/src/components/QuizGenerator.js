@@ -11,31 +11,14 @@ export default function QuizGenerator({ onGenerate }) {
   const [difficulty, setDifficulty] = useState('easy');
   const [loading, setLoading] = useState(false);
 
-
-  const canPing = async () => {
-    try {
-      const response = await fetch(`${baseUrl}/ping`, { // Port 5000
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      const data = await response.json();
-    } catch (error) {
-      console.error('Error pinging server:', error);
-    }
-  };
   const handleGenerate = async () => {
     setLoading(true);
     try {
-      if (!canPing()) {
-        console.log('Cannot ping server');
-        return;
-      }
       const response = await fetch(`${baseUrl}/generate/quiz`, { // Port 5000
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('quizToken')}` || null,
         },
         body: JSON.stringify({
           topic : topic,

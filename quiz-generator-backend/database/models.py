@@ -27,10 +27,24 @@ class UserScore(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     quiz_id = Column(Integer, ForeignKey("quizzes.id", ondelete="CASCADE"))
-    user_id = Column(String(255))
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
     score = Column(Integer)
     max_score = Column(Integer)
     answers = Column(JSON)
+    created_at = Column(
+        TIMESTAMP,
+        server_default=func.now(),
+        nullable=False
+    )
+
+
+class User(Base):
+    __tablename__ = "users"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String(255), unique=True, index=True)
+    username = Column(String(255))
+    hashed_password = Column(String(255))
     created_at = Column(
         TIMESTAMP,
         server_default=func.now(),

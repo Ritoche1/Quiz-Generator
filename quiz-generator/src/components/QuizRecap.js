@@ -16,29 +16,59 @@ export default function QuizRecap({ quiz, selectedAnswers, onRestart }) {
     return score;
   };
 
+  const submitQuizAttempt = async () => {
+    try {
+      console.log(quiz);
+      const response = await fetch(`${baseUrl}/quizzes`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('quizToken')}` || null,
+        },
+        body: JSON.stringify({
+          title : quiz.title,
+          description : "Quiz about " + quiz.title + " with " + quiz.questions.length + " questions in "  + quiz.difficulty + " difficulty in " + quiz.language + " language",
+          language : quiz.language,
+          questions : quiz.questions,
+        })
+      });
+      
+      if (!response.ok) throw new Error('Failed to save attempt');
+      const data = await response.json();
+      submitUserScore(data.id);
+    } catch (error) {
+      console.error('Error submitting quiz attempt:', error);
+    }
+  };
+
+  const submitUserScore = async (quiz_id) => {
+    try {
+      const response = await fetch(`${baseUrl}/scores/${quiz_id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('quizToken')}` || null,
+        },
+        body: JSON.stringify({
+          score : calculateScore(),
+          max_score : quiz.questions.length,
+          answers : selectedAnswers,
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to save score');
+    }
+    catch (error) {
+      console.error('Error submitting user score:', error);
+    }
+  }
+
+
   useEffect(() => {
     if (didMountRef.current) return;
     didMountRef.current = true;
 
-    const submitQuizAttempt = async () => {
-      try {
-        console.log(quiz);
-        const response = await fetch(`${baseUrl}/quizzes`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title : quiz.title,
-            description : "Quiz about " + quiz.title + " with " + quiz.questions.length + " questions in "  + quiz.difficulty + " difficulty in " + quiz.language + " language",
-            language : quiz.language,
-            questions : quiz.questions,
-          })
-        });
-        
-        if (!response.ok) throw new Error('Failed to save attempt');
-      } catch (error) {
-        console.error('Error submitting quiz attempt:', error);
-      }
-    };
+    
 
     if (quiz.questions.length > 0) {
       submitQuizAttempt();

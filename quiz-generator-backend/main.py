@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import quizzes, scores, generator
+from app.routers import quizzes, scores, generator, auth
 from database.database import engine, Base
 from database import models
 from database.database import engine
@@ -24,7 +24,7 @@ app.add_middleware(
 app.include_router(generator.router)
 app.include_router(quizzes.router)
 app.include_router(scores.router)
-
+app.include_router(auth.router)
 
 @app.get("/ping")
 async def ping():
