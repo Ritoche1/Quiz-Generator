@@ -8,14 +8,45 @@ services:
       - backend
     networks:
       - quiz-net
-  backend:
-    build: ./quiz-generator-backend
-    ports:
-      - '5000:5000'
     env_file:
       - .env
+
+  postgres: 
+    image: postgres:15-alpine
+    container_name: quiz-db
+    environment:
+      POSTGRES_DB: quizdb
+      POSTGRES_USER: quizuser
+      POSTGRES_PASSWORD: quizpass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
     networks:
-      - quiz-net
+      - quiz-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quizuser -d quizdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./quiz-generator-backend
+    container_name: quiz-backend
+    env_file:
+      - .env
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - quiz-network
 
 networks:
+  quiz-network:
+    driver: bridge
   quiz-net:
+
+volumes:
+  postgres_data:

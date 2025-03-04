@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 
+const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+
 export default function QuizGenerator({ onGenerate }) {
   const languages = ['English', 'Spanish', 'French', 'German', 'Italian', 'Portuguese', 'Dutch', 'Russian', 'Japanese', 'Korean', 'Chinese', 'Arabic', 'Hindi', 'Turkish', 'Polish'];
   const [topic, setTopic] = useState('');
@@ -12,7 +14,7 @@ export default function QuizGenerator({ onGenerate }) {
 
   const canPing = async () => {
     try {
-      const response = await fetch('https://ritoche.site/api/ping', { // Port 5000
+      const response = await fetch(`${baseUrl}/ping`, { // Port 5000
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -30,15 +32,24 @@ export default function QuizGenerator({ onGenerate }) {
         console.log('Cannot ping server');
         return;
       }
-      const response = await fetch('https://ritoche.site/api/generate-quiz', { // Port 5000
+      const response = await fetch(`${baseUrl}/generate/quiz`, { // Port 5000
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ topic, difficulty, language }),
+        body: JSON.stringify({
+          topic : topic,
+          language : language,
+          difficulty : difficulty
+        }),
       });
       const data = await response.json();
-      onGenerate(data.quiz);
+      onGenerate({
+        title : topic,
+        language : language,
+        difficulty : difficulty,
+        questions : data
+      });
     } catch (error) {
       console.error('Error generating quiz:', error);
     } finally {
