@@ -171,5 +171,3 @@ Contributions are welcome! Please submit an issue or pull request for any improv
 This project is licensed under the MIT License.
 <<<<<<< HEAD
 ```
-=======
->>>>>>> cec3c49e93a5791bdc6861b93696202c1543f897
