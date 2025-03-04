@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: "Quiz Generator",
-  description: "Making by heart by Ritoche11",
+  description: "Making by heart by Ritoche1",
 };
 
 export default function RootLayout({ children }) {

@@ -6,6 +6,7 @@ import QuizQuestion from '@/components/QuizQuestion';
 import QuizRecap from '@/components/QuizRecap';
 import AuthForm from '@/components/AuthForm';
 import Navigation from '@/components/Navigation';
+import Footer from '@/components/Footer';
 
 const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
 
@@ -123,7 +124,7 @@ export default function Home({ initialQuiz = null}) {
   return (
     <>
       <Navigation user={user} onRedoQuiz={handleRedoQuiz} onNewQuiz={handleRestart}/>
-      <div className={`min-h-screen gradient-bg flex flex-col items-center justify-center text-white p-4 ${bgClass} transition-all duration-2000`}>
+      <div className={`min-h-screen pb-16 gradient-bg flex flex-col items-center justify-center text-white p-4 ${bgClass} transition-all duration-2000`}>
         {isAuthenticated && quiz && quiz.questions && quiz.questions.length > 0 && !showRecap ? (
           <>
             <QuizQuestion
@@ -156,6 +157,7 @@ export default function Home({ initialQuiz = null}) {
           </div>
         )}
       </div>
+      <Footer />
     </>
   );
 }
