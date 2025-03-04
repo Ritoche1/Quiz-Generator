@@ -18,7 +18,7 @@ export default function QuizRecap({ quiz, selectedAnswers, onRestart }) {
 
   const submitQuizAttempt = async () => {
     try {
-      const response = await fetch(`${baseUrl}/quizzes`, {
+      const response = await fetch(`${baseUrl}/quizzes/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
