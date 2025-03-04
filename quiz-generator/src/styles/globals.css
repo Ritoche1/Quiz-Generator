@@ -30,3 +30,31 @@
   --bg-start: #6366f1;
   --bg-end: #ef4444;
 }
+
+@layer utilities {
+  .backdrop-blur-md {
+      backdrop-filter: blur(12px);
+  }
+  .bg-white\/10 {
+      background-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.hover-actions {
+  transition: opacity 0.2s ease;
+}
+
+.history-item:hover .hover-actions {
+  opacity: 1;
+}
+
+/* File: quiz-generator/src/styles/globals.css */
+.new-quiz-btn {
+  transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.new-quiz-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}

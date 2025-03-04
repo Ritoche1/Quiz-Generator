@@ -14,7 +14,7 @@ export default function QuizGenerator({ onGenerate }) {
   const handleGenerate = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${baseUrl}/generate/quiz`, { // Port 5000
+      const response = await fetch(`${baseUrl}/generate/quiz`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

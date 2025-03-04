@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, JSON, ForeignKey, TIMESTAMP
+from sqlalchemy import Column, Integer, String, JSON, ForeignKey, TIMESTAMP, Index
 from database.database import Base
 from sqlalchemy.sql import func
+
 
 class Quiz(Base):
     __tablename__ = "quizzes"
@@ -10,6 +11,7 @@ class Quiz(Base):
     description = Column(String)
     language = Column(String(255))
     questions = Column(JSON)
+    difficulty = Column(String(255))
     created_at = Column(
         TIMESTAMP,
         server_default=func.now(),
@@ -24,10 +26,14 @@ class Quiz(Base):
 
 class UserScore(Base):
     __tablename__ = "user_scores"
+    __table_args__ = (
+        Index('ix_user_scores_user_id', 'user_id'),
+        Index('ix_user_scores_quiz_id', 'quiz_id'),
+    )
     
     id = Column(Integer, primary_key=True, index=True)
-    quiz_id = Column(Integer, ForeignKey("quizzes.id", ondelete="CASCADE"))
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
+    quiz_id = Column(Integer, ForeignKey("quizzes.id"))
+    user_id = Column(Integer, ForeignKey("users.id"))
     score = Column(Integer)
     max_score = Column(Integer)
     answers = Column(JSON)

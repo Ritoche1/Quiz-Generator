@@ -11,11 +11,14 @@ class QuizCreate(BaseModel):
     title: str
     description: str
     language: str
+    difficulty: str
     questions: List[QuestionSchema]
 
 class QuizResponse(BaseModel):
     id: int
     title: str
     description: str
+    language: str
+    difficulty: str
     questions: List[Dict]
     created_at: datetime

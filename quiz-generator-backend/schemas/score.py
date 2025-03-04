@@ -13,3 +13,8 @@ class ScoreResponse(BaseModel):
     score: int
     max_score: int
     created_at: datetime
+
+class ScoreUpdate(BaseModel):
+    score: int
+    max_score: int
+    answers: dict

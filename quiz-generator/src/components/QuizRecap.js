@@ -18,7 +18,6 @@ export default function QuizRecap({ quiz, selectedAnswers, onRestart }) {
 
   const submitQuizAttempt = async () => {
     try {
-      console.log(quiz);
       const response = await fetch(`${baseUrl}/quizzes`, {
         method: 'POST',
         headers: {
@@ -30,6 +29,7 @@ export default function QuizRecap({ quiz, selectedAnswers, onRestart }) {
           description : "Quiz about " + quiz.title + " with " + quiz.questions.length + " questions in "  + quiz.difficulty + " difficulty in " + quiz.language + " language",
           language : quiz.language,
           questions : quiz.questions,
+          difficulty : quiz.difficulty,
         })
       });
       
@@ -41,19 +41,40 @@ export default function QuizRecap({ quiz, selectedAnswers, onRestart }) {
     }
   };
 
-  const submitUserScore = async (quiz_id) => {
+  const submitUserScore = async (quiz_id, isUpdate = false) => {
+    let response = { ok: false };
+    let method = 'POST';
+
+    // fetch GET /quizzes/:id to get the quiz details if it's an update
+    if (isUpdate) {
+      response = await fetch(`${baseUrl}/scores/${quiz_id}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('quizToken')}` || null,
+        }
+      });
+      const data = await response.json();
+      if (response.ok && response.status === 200 && data.quiz_id === quiz.id) {
+        method = 'PUT';
+      } else {
+        submitQuizAttempt();
+        return;
+      }
+    }
+
     try {
-      const response = await fetch(`${baseUrl}/scores/${quiz_id}`, {
-        method: 'POST',
+      const body = JSON.stringify({
+        score : calculateScore(),
+        max_score : quiz.questions.length,
+        answers : selectedAnswers,
+      });
+
+      response = await fetch(`${baseUrl}/scores/${quiz_id}`, {
+        method: method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('quizToken')}` || null,
         },
-        body: JSON.stringify({
-          score : calculateScore(),
-          max_score : quiz.questions.length,
-          answers : selectedAnswers,
-        })
+        body: body
       });
 
       if (!response.ok) throw new Error('Failed to save score');
@@ -69,6 +90,10 @@ export default function QuizRecap({ quiz, selectedAnswers, onRestart }) {
     didMountRef.current = true;
 
     
+    if (quiz.difficulty === "redo") {
+      submitUserScore(quiz.id, true);
+      return;
+    }
 
     if (quiz.questions.length > 0) {
       submitQuizAttempt();
