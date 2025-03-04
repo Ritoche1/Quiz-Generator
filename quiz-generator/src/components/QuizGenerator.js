@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:5000';
 
 export default function QuizGenerator({ onGenerate }) {
   const languages = ['English', 'Spanish', 'French', 'German', 'Italian', 'Portuguese', 'Dutch', 'Russian', 'Japanese', 'Korean', 'Chinese', 'Arabic', 'Hindi', 'Turkish', 'Polish'];

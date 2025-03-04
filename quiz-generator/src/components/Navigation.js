@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:5000';
 
 export default function Navigation({ user, onRedoQuiz, onNewQuiz }) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);

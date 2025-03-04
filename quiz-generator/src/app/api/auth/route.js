@@ -4,8 +4,8 @@ export async function POST(request) {
     
     try {
         const backendUrl = isLogin ? 
-            `${process.env.BASE_URL}/auth/login` :
-            `${process.env.BASE_URL}/auth/register`;
+            `${process.env.NEXT_PUBLIC_BASE_URL}/auth/login` :
+            `${process.env.NEXT_PUBLIC_BASE_URL}/auth/register`;
             
         const body = isLogin ? { username: email, password } : { email, password, username };
         

@@ -16,7 +16,7 @@ export default function AuthForm({onLogin}) {
         let url = '/auth/register';
         let body =  JSON.stringify({ username, email, password });
         let headers = { 'Content-Type': 'application/json' };
-        const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:5000';
         
         if (isLogin) {
             url = '/auth/login';
