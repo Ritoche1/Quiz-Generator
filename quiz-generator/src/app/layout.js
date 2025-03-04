@@ -15,6 +15,11 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: "Quiz Generator",
   description: "Making by heart by Ritoche1",
+  icons: {
+    icon: [
+      '/favicon.ico'
+    ],
+  },
 };
 
 export default function RootLayout({ children }) {
