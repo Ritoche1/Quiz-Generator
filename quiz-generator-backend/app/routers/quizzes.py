@@ -7,6 +7,7 @@ from schemas.quiz import *
 
 router = APIRouter(prefix="/quizzes", tags=["quizzes"])
 
+@router.post("", response_model=QuizResponse, include_in_schema=False)
 @router.post("/", response_model=QuizResponse)
 async def create_new_quiz(quiz: QuizCreate, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
     quiz_data = quiz.dict()

@@ -6,7 +6,7 @@ export default function Footer() {
     <footer className="fixed bottom-0 w-full bg-white/10 backdrop-blur-md border-t border-white/20 mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-center">
         <a
-          href="https://github.com/ritoche11/quiz-generator"
+          href="https://github.com/ritoche1/quiz-generator"
           target="_blank"
           rel="noopener noreferrer"
           className="text-white hover:text-blue-300 transition-colors flex items-center gap-2"
