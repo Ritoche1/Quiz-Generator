@@ -28,5 +28,8 @@ async def update_quiz(db: AsyncSession, quiz_id: int, update_data: dict):
 
 async def delete_quiz(db: AsyncSession, quiz_id: int):
     quiz = await get_quiz(db, quiz_id)
+    if not quiz:
+        return False
     await db.delete(quiz)
     await db.commit()
+    return True
