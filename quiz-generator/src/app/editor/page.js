@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}` : 'http://localhost:5000';
@@ -22,6 +23,9 @@ export default function QuizEditor() {
   });
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [saveStatus, setSaveStatus] = useState('');
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewCurrentQuestion, setPreviewCurrentQuestion] = useState(0);
+  const [previewAnswers, setPreviewAnswers] = useState({});
 
   const languages = ['English', 'Spanish', 'French', 'German', 'Italian', 'Portuguese', 'Dutch', 'Russian', 'Japanese', 'Korean', 'Chinese', 'Arabic', 'Hindi', 'Turkish', 'Polish'];
 
@@ -146,8 +150,30 @@ export default function QuizEditor() {
         throw new Error('At least one complete question is required');
       }
 
-      // For now, just show success message
-      // In real implementation, would call API to save quiz
+      // Save to backend
+      const token = localStorage.getItem('quizToken');
+      const response = await fetch(`${baseUrl}/quizzes/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title: quiz.title,
+          description: quiz.description || `A ${quiz.difficulty} quiz in ${quiz.language} with ${validQuestions.length} questions`,
+          language: quiz.language,
+          difficulty: quiz.difficulty,
+          questions: validQuestions
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save quiz');
+      }
+
+      const savedQuiz = await response.json();
+      console.log('Quiz saved successfully:', savedQuiz);
+      
       setSaveStatus('success');
       setTimeout(() => setSaveStatus(''), 3000);
     } catch (error) {
@@ -158,24 +184,94 @@ export default function QuizEditor() {
   };
 
   const previewQuiz = () => {
-    // In real implementation, would open preview modal or navigate to preview page
-    alert('Preview functionality would open in a modal or new page');
+    // Validate that there's at least one complete question
+    const validQuestions = quiz.questions.filter(q => 
+      q.question.trim() && 
+      q.options.every(opt => opt.trim()) && 
+      q.answer.trim()
+    );
+    
+    if (validQuestions.length === 0) {
+      alert('Please complete at least one question before previewing');
+      return;
+    }
+    
+    setPreviewCurrentQuestion(0);
+    setPreviewAnswers({});
+    setShowPreview(true);
+  };
+
+  const closePreview = () => {
+    setShowPreview(false);
+    setPreviewCurrentQuestion(0);
+    setPreviewAnswers({});
+  };
+
+  const selectPreviewAnswer = (answer) => {
+    setPreviewAnswers(prev => ({
+      ...prev,
+      [previewCurrentQuestion]: answer
+    }));
+  };
+
+  const nextPreviewQuestion = () => {
+    const validQuestions = quiz.questions.filter(q => 
+      q.question.trim() && 
+      q.options.every(opt => opt.trim()) && 
+      q.answer.trim()
+    );
+    
+    if (previewCurrentQuestion < validQuestions.length - 1) {
+      setPreviewCurrentQuestion(prev => prev + 1);
+    }
+  };
+
+  const prevPreviewQuestion = () => {
+    if (previewCurrentQuestion > 0) {
+      setPreviewCurrentQuestion(prev => prev - 1);
+    }
   };
 
   const importFromTemplate = async () => {
     try {
-      const response = await fetch(`${baseUrl}/editor/templates`);
-      const templates = await response.json();
+      // Fetch user's quiz history
+      const token = localStorage.getItem('quizToken');
+      const response = await fetch(`${baseUrl}/quizzes/history`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       
-      // For now, use the first template - in a real app, we'd show a selection dialog
-      const template = templates[0];
-      setQuiz(template);
-      setCurrentQuestionIndex(0);
+      if (response.ok) {
+        const userQuizzes = await response.json();
+        
+        if (userQuizzes.length === 0) {
+          alert('No quiz history found. Create your first quiz to use templates later!');
+          return;
+        }
+        
+        // For now, show simple selection - in a full implementation, we'd show a modal
+        const quizTitles = userQuizzes.map((q, i) => `${i + 1}. ${q.title}`).join('\n');
+        const selection = prompt(`Select a quiz template:\n\n${quizTitles}\n\nEnter the number (1-${userQuizzes.length}):`);
+        
+        const selectedIndex = parseInt(selection) - 1;
+        if (selectedIndex >= 0 && selectedIndex < userQuizzes.length) {
+          const selectedQuiz = userQuizzes[selectedIndex];
+          setQuiz(selectedQuiz);
+          setCurrentQuestionIndex(0);
+        } else {
+          alert('Invalid selection');
+        }
+      } else {
+        throw new Error('Failed to fetch quiz history');
+      }
     } catch (error) {
-      console.error('Error loading templates:', error);
-      // Fallback template
+      console.error('Error loading user quiz history:', error);
+      
+      // Fallback to sample template
+      alert('Could not load your quiz history. Using a sample template instead.');
       const template = {
-        title: 'Sample Quiz',
+        title: 'Sample Quiz Template',
         description: 'A sample quiz to help you get started',
         language: 'English',
         difficulty: 'easy',
@@ -217,9 +313,9 @@ export default function QuizEditor() {
           <p className="text-gray-600 mb-6">
             Please log in to access the quiz editor
           </p>
-          <a href="/" className="btn-primary">
+          <Link href="/" className="btn-primary">
             Go to Login
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -243,7 +339,7 @@ export default function QuizEditor() {
                 onClick={importFromTemplate}
                 className="btn-secondary"
               >
-                📝 Use Template
+                📝 Load from History
               </button>
               <button
                 onClick={previewQuiz}
@@ -507,6 +603,127 @@ export default function QuizEditor() {
           </div>
         </div>
       </div>
+
+      {/* Preview Modal */}
+      {showPreview && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-gray-800">Quiz Preview</h2>
+                <button
+                  onClick={closePreview}
+                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6">
+              {/* Quiz Header */}
+              <div className="text-center mb-8">
+                <h3 className="text-3xl font-bold text-gray-800 mb-2">{quiz.title}</h3>
+                <p className="text-gray-600 mb-4">{quiz.description}</p>
+                <div className="flex items-center justify-center gap-4 text-sm text-gray-500">
+                  <span>Language: {quiz.language}</span>
+                  <span>•</span>
+                  <span>Difficulty: {quiz.difficulty.charAt(0).toUpperCase() + quiz.difficulty.slice(1)}</span>
+                </div>
+              </div>
+
+              {/* Question Display */}
+              {(() => {
+                const validQuestions = quiz.questions.filter(q => 
+                  q.question.trim() && 
+                  q.options.every(opt => opt.trim()) && 
+                  q.answer.trim()
+                );
+                
+                if (validQuestions.length === 0) {
+                  return (
+                    <div className="text-center py-12">
+                      <p className="text-gray-500">No complete questions to preview</p>
+                    </div>
+                  );
+                }
+                
+                const currentPreviewQuestion = validQuestions[previewCurrentQuestion];
+                
+                return (
+                  <div className="max-w-2xl mx-auto">
+                    {/* Question Progress */}
+                    <div className="mb-6">
+                      <div className="flex justify-between text-sm text-gray-600 mb-2">
+                        <span>Question {previewCurrentQuestion + 1} of {validQuestions.length}</span>
+                        <span>{Math.round(((previewCurrentQuestion + 1) / validQuestions.length) * 100)}% Complete</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${((previewCurrentQuestion + 1) / validQuestions.length) * 100}%` }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    {/* Question */}
+                    <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+                      <h4 className="text-xl font-semibold text-gray-800 mb-6">
+                        {currentPreviewQuestion.question}
+                      </h4>
+                      
+                      <div className="space-y-3">
+                        {currentPreviewQuestion.options.map((option, index) => (
+                          <button
+                            key={index}
+                            onClick={() => selectPreviewAnswer(option)}
+                            className={`w-full p-4 text-left rounded-xl border-2 transition-all duration-300 flex items-center gap-3 ${
+                              previewAnswers[previewCurrentQuestion] === option
+                                ? 'border-indigo-500 bg-indigo-50 text-indigo-800'
+                                : 'border-gray-200 hover:border-indigo-300 hover:bg-indigo-50'
+                            }`}
+                          >
+                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                              previewAnswers[previewCurrentQuestion] === option
+                                ? 'border-indigo-500 bg-indigo-500'
+                                : 'border-gray-300'
+                            }`}>
+                              {previewAnswers[previewCurrentQuestion] === option && (
+                                <div className="w-2 h-2 bg-white rounded-full"></div>
+                              )}
+                            </div>
+                            <span className="font-medium">{String.fromCharCode(65 + index)}.</span>
+                            <span>{option}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Navigation */}
+                    <div className="flex justify-between">
+                      <button
+                        onClick={prevPreviewQuestion}
+                        disabled={previewCurrentQuestion === 0}
+                        className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+                      >
+                        ← Previous
+                      </button>
+                      
+                      <button
+                        onClick={nextPreviewQuestion}
+                        disabled={previewCurrentQuestion >= validQuestions.length - 1}
+                        className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+                      >
+                        {previewCurrentQuestion >= validQuestions.length - 1 ? 'Finish Preview' : 'Next →'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

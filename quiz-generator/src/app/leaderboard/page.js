@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}` : 'http://localhost:5000';
@@ -160,20 +161,20 @@ export default function Leaderboard() {
           {stats && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
               <div className="glass-card p-4 rounded-xl text-center">
-                <div className="text-2xl font-bold text-white">{stats.totalQuizzes}</div>
-                <div className="text-white/70 text-sm">Total Quizzes</div>
+                <div className="text-2xl font-bold text-gray-800">{stats.totalQuizzes}</div>
+                <div className="text-gray-600 text-sm">Total Quizzes</div>
               </div>
               <div className="glass-card p-4 rounded-xl text-center">
-                <div className="text-2xl font-bold text-white">{stats.totalUsers}</div>
-                <div className="text-white/70 text-sm">Active Users</div>
+                <div className="text-2xl font-bold text-gray-800">{stats.totalUsers}</div>
+                <div className="text-gray-600 text-sm">Active Users</div>
               </div>
               <div className="glass-card p-4 rounded-xl text-center">
-                <div className="text-2xl font-bold text-white">{stats.avgScore}%</div>
-                <div className="text-white/70 text-sm">Average Score</div>
+                <div className="text-2xl font-bold text-gray-800">{stats.avgScore}%</div>
+                <div className="text-gray-600 text-sm">Average Score</div>
               </div>
               <div className="glass-card p-4 rounded-xl text-center">
-                <div className="text-xl font-bold text-white truncate">{stats.topicOfTheWeek}</div>
-                <div className="text-white/70 text-sm">Hot Topic</div>
+                <div className="text-xl font-bold text-gray-800 truncate">{stats.topicOfTheWeek}</div>
+                <div className="text-gray-600 text-sm">Hot Topic</div>
               </div>
             </div>
           )}
@@ -277,13 +278,13 @@ export default function Leaderboard() {
               <p className="text-gray-600 mb-6">
                 Take more quizzes and improve your scores to reach the top!
               </p>
-              <a
+              <Link
                 href="/"
                 className="btn-primary inline-flex items-center gap-2"
               >
                 <span>🎯</span>
                 <span>Start Quiz</span>
-              </a>
+              </Link>
             </div>
           </div>
         </div>
