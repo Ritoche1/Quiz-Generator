@@ -99,6 +99,19 @@ export default function Navigation({ user, onRedoQuiz, onNewQuiz }) {
                                 </svg>
                                 <span>New Quiz</span>
                             </button>
+
+                            {/* Quick Navigation Links */}
+                            <div className="hidden md:flex items-center space-x-1">
+                                <Link href="/browse" className="btn-ghost text-sm px-3 py-2">
+                                    🎯 Browse
+                                </Link>
+                                <Link href="/leaderboard" className="btn-ghost text-sm px-3 py-2">
+                                    🏆 Leaderboard
+                                </Link>
+                                <Link href="/editor" className="btn-ghost text-sm px-3 py-2">
+                                    📝 Editor
+                                </Link>
+                            </div>
                         </div>
                     )}
 
@@ -140,7 +153,16 @@ export default function Navigation({ user, onRedoQuiz, onNewQuiz }) {
                     )}
 
                     {!user && (
-                        <div className="flex-1 flex justify-end">
+                        <div className="flex-1 flex justify-end space-x-4">
+                            {/* Public Navigation Links */}
+                            <div className="hidden md:flex items-center space-x-1 mr-4">
+                                <Link href="/browse" className="btn-ghost text-sm px-3 py-2">
+                                    🎯 Browse Quizzes
+                                </Link>
+                                <Link href="/leaderboard" className="btn-ghost text-sm px-3 py-2">
+                                    🏆 Leaderboard
+                                </Link>
+                            </div>
                             <Link href="/" className="btn-secondary">
                                 Login
                             </Link>
@@ -228,6 +250,34 @@ export default function Navigation({ user, onRedoQuiz, onNewQuiz }) {
                                     ))}
                                 </div>
                             )}
+                        </div>
+
+                        {/* Mobile Quick Links */}
+                        <div className="p-6 border-t border-gray-200 md:hidden">
+                            <h4 className="font-medium text-gray-800 mb-3">Quick Links</h4>
+                            <div className="space-y-2">
+                                <Link 
+                                    href="/browse" 
+                                    className="block p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
+                                    🎯 Browse Quizzes
+                                </Link>
+                                <Link 
+                                    href="/leaderboard" 
+                                    className="block p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
+                                    🏆 Leaderboard
+                                </Link>
+                                <Link 
+                                    href="/editor" 
+                                    className="block p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
+                                    📝 Quiz Editor
+                                </Link>
+                            </div>
                         </div>
                     </div>
                 </>
