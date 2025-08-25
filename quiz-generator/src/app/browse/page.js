@@ -367,7 +367,7 @@ export default function BrowseQuizzes() {
                       <div>
                         <div className="text-sm font-medium text-gray-800">{quiz.creator}</div>
                         <div className="text-xs text-gray-500">
-                          {quiz.created.toLocaleDateString()}
+                          {new Date(quiz.created).toLocaleDateString()}
                         </div>
                       </div>
                     </div>

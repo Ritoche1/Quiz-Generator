@@ -4,12 +4,17 @@ import { useEffect, useRef, useState } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}` : 'http://localhost:5000';
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL.replace(/\/$/, '')}` : 'http://localhost:5000';
+const apiBase = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`;
 
 export default function QuizRecap({ quiz, selectedAnswers, onRestart }) {
   const didMountRef = useRef(false);
   const [showingReport, setShowingReport] = useState(false);
   const [generateStatus, setGenerateStatus] = useState('');
+  // États pour les statistiques (déplacés à l'intérieur du composant)
+  const [globalStats, setGlobalStats] = useState(null);
+  const [attemptsCount, setAttemptsCount] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(false);
 
   const calculateScore = () => {
     let score = 0;
@@ -43,7 +48,7 @@ export default function QuizRecap({ quiz, selectedAnswers, onRestart }) {
 
   const submitQuizAttempt = async () => {
     try {
-      const response = await fetch(`${baseUrl}/quizzes/`, {
+      const response = await fetch(`${apiBase}/quizzes/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -72,7 +77,7 @@ export default function QuizRecap({ quiz, selectedAnswers, onRestart }) {
 
     // fetch GET /quizzes/:id to get the quiz details if it's an update
     if (isUpdate) {
-      response = await fetch(`${baseUrl}/scores/${quiz_id}`, {
+      response = await fetch(`${apiBase}/scores/${quiz_id}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('quizToken')}` || null,
         }
@@ -93,7 +98,7 @@ export default function QuizRecap({ quiz, selectedAnswers, onRestart }) {
         answers : selectedAnswers,
       });
 
-      response = await fetch(`${baseUrl}/scores/${quiz_id}`, {
+      response = await fetch(`${apiBase}/scores/${quiz_id}`, {
         method: method,
         headers: {
           'Content-Type': 'application/json',
@@ -584,6 +589,34 @@ export default function QuizRecap({ quiz, selectedAnswers, onRestart }) {
     }
   }, []);
 
+  useEffect(() => {
+    let mounted = true;
+    const fetchStats = async () => {
+      setStatsLoading(true);
+      try {
+        const res = await fetch(`${apiBase}/quizzes/stats/global`);
+        if (res.ok) {
+          const data = await res.json();
+          if (mounted) setGlobalStats(data);
+        }
+
+        if (quiz && quiz.id) {
+          const r2 = await fetch(`${apiBase}/quizzes/${quiz.id}/scores/count`);
+          if (r2.ok) {
+            const d2 = await r2.json();
+            if (mounted) setAttemptsCount(d2.attempts ?? d2.count ?? 0);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to fetch stats', e);
+      } finally {
+        if (mounted) setStatsLoading(false);
+      }
+    };
+    fetchStats();
+    return () => { mounted = false; };
+  }, [quiz?.id]);
+
   if (showingReport) {
     return (
       <div className="w-full max-w-4xl glass-card p-8 rounded-2xl" role="region" aria-labelledby="detailed-report-heading">
@@ -694,6 +727,24 @@ export default function QuizRecap({ quiz, selectedAnswers, onRestart }) {
         <div className="text-center p-4 bg-gray-50 rounded-xl">
           <div className="text-2xl font-bold text-blue-700">{quiz.questions.length}</div>
           <div className="text-sm text-gray-700">Total</div>
+        </div>
+      </div>
+
+      {/* Global / Quiz attempts stats */}
+      <div className="mb-6">
+        <div className="flex items-center justify-center gap-4 text-sm text-gray-700">
+          <div className="p-3 bg-gray-50 rounded-lg text-center w-36">
+            <div className="text-lg font-bold text-indigo-600">{statsLoading ? '—' : (attemptsCount ?? '—')}</div>
+            <div className="text-xs">This quiz attempts</div>
+          </div>
+          <div className="p-3 bg-gray-50 rounded-lg text-center w-36">
+            <div className="text-lg font-bold text-indigo-600">{globalStats?.total_quizzes ?? '—'}</div>
+            <div className="text-xs">Total quizzes</div>
+          </div>
+          <div className="p-3 bg-gray-50 rounded-lg text-center w-36">
+            <div className="text-lg font-bold text-indigo-600">{globalStats?.total_attempts ?? '—'}</div>
+            <div className="text-xs">Total attempts</div>
+          </div>
         </div>
       </div>
 
