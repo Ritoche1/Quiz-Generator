@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.services.mistral_service import generate_quiz_content
 from app.services.quiz_service import save_generated_quiz
 from database.database import get_db
+from database.models import User
+from app.routers.auth import get_current_user
 from pydantic import BaseModel
 from typing import List
 
@@ -20,6 +22,7 @@ class QuizQuestion(BaseModel):
 @router.post("/quiz", response_model=List[QuizQuestion])
 async def generate_quiz_endpoint(
     quiz_request: QuizRequest,
+    current_user: User = Depends(get_current_user),
     db=Depends(get_db)
 ):
     try:

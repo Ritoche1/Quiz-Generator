@@ -1,5 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "@/styles/globals.css";
+import Navigation from "@/components/Navigation";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,7 +14,12 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: "Quiz Generator",
-  description: "Making by heart by Ritoche11",
+  description: "Making by heart by Ritoche1",
+  icons: {
+    icon: [
+      '/favicon.ico'
+    ],
+  },
 };
 
 export default function RootLayout({ children }) {

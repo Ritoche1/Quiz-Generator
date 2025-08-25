@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 
-const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}` : 'http://localhost:5000';
 
 export default function QuizRecap({ quiz, selectedAnswers, onRestart }) {
   const didMountRef = useRef(false);
@@ -16,29 +16,84 @@ export default function QuizRecap({ quiz, selectedAnswers, onRestart }) {
     return score;
   };
 
+  const submitQuizAttempt = async () => {
+    try {
+      const response = await fetch(`${baseUrl}/quizzes/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('quizToken')}` || null,
+        },
+        body: JSON.stringify({
+          title : quiz.title,
+          description : "Quiz about " + quiz.title + " with " + quiz.questions.length + " questions in "  + quiz.difficulty + " difficulty in " + quiz.language + " language",
+          language : quiz.language,
+          questions : quiz.questions,
+          difficulty : quiz.difficulty,
+        })
+      });
+      
+      if (!response.ok) throw new Error('Failed to save attempt');
+      const data = await response.json();
+      submitUserScore(data.id);
+    } catch (error) {
+      console.error('Error submitting quiz attempt:', error);
+    }
+  };
+
+  const submitUserScore = async (quiz_id, isUpdate = false) => {
+    let response = { ok: false };
+    let method = 'POST';
+
+    // fetch GET /quizzes/:id to get the quiz details if it's an update
+    if (isUpdate) {
+      response = await fetch(`${baseUrl}/scores/${quiz_id}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('quizToken')}` || null,
+        }
+      });
+      const data = await response.json();
+      if (response.ok && response.status === 200 && data.quiz_id === quiz.id) {
+        method = 'PUT';
+      } else {
+        submitQuizAttempt();
+        return;
+      }
+    }
+
+    try {
+      const body = JSON.stringify({
+        score : calculateScore(),
+        max_score : quiz.questions.length,
+        answers : selectedAnswers,
+      });
+
+      response = await fetch(`${baseUrl}/scores/${quiz_id}`, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('quizToken')}` || null,
+        },
+        body: body
+      });
+
+      if (!response.ok) throw new Error('Failed to save score');
+    }
+    catch (error) {
+      console.error('Error submitting user score:', error);
+    }
+  }
+
+
   useEffect(() => {
     if (didMountRef.current) return;
     didMountRef.current = true;
 
-    const submitQuizAttempt = async () => {
-      try {
-        console.log(quiz);
-        const response = await fetch(`${baseUrl}/quizzes`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title : quiz.title,
-            description : "Quiz about " + quiz.title + " with " + quiz.questions.length + " questions in "  + quiz.difficulty + " difficulty in " + quiz.language + " language",
-            language : quiz.language,
-            questions : quiz.questions,
-          })
-        });
-        
-        if (!response.ok) throw new Error('Failed to save attempt');
-      } catch (error) {
-        console.error('Error submitting quiz attempt:', error);
-      }
-    };
+    
+    if (quiz.difficulty === "redo") {
+      submitUserScore(quiz.id, true);
+      return;
+    }
 
     if (quiz.questions.length > 0) {
       submitQuizAttempt();

@@ -1,12 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
 from database.database import get_db
+from database.models import User
+from app.routers.auth import get_current_user
 from crud.quiz_crud import *
 from schemas.quiz import *
 
 router = APIRouter(prefix="/quizzes", tags=["quizzes"])
 
+@router.post("", response_model=QuizResponse, include_in_schema=False)
 @router.post("/", response_model=QuizResponse)
-async def create_new_quiz(quiz: QuizCreate, db: AsyncSession = Depends(get_db)):
+async def create_new_quiz(quiz: QuizCreate, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
     quiz_data = quiz.dict()
     quiz_data["questions"] = [q.dict() for q in quiz.questions]
     return await create_quiz(db, quiz_data)

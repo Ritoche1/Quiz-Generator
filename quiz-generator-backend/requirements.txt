@@ -4,3 +4,8 @@ mistralai
 python-dotenv
 asyncpg
 sqlalchemy
+bcrypt
+python-jose[cryptography]
+python-multipart
+passlib
+aiosqlite
