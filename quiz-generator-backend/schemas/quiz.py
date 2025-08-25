@@ -7,6 +7,9 @@ class QuestionSchema(BaseModel):
     options: List[str]
     answer: str
 
+    class Config:
+        orm_mode = True
+
 class QuizCreate(BaseModel):
     title: str
     description: str
@@ -29,3 +32,6 @@ class QuizResponse(BaseModel):
     difficulty: str
     questions: List[Dict]
     created_at: datetime
+
+    class Config:
+        orm_mode = True
