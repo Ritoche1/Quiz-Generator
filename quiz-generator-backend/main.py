@@ -15,18 +15,21 @@ async def startup_db():
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:83", "http://ritoche.site", "https://ritoche.site", "https://www.ritoche.site"],
+    allow_origins=["http://localhost:83", "http://quiz.ritoche.site", "https://ritoche.site", "https://quiz.ritoche.site"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
 )
 
-app.include_router(generator.router)
-app.include_router(quizzes.router)
-app.include_router(scores.router)
-app.include_router(auth.router)
 
-@app.get("/ping")
+prefix = "/api"
+
+app.include_router(generator.router, prefix=prefix)
+app.include_router(quizzes.router , prefix=prefix)
+app.include_router(scores.router , prefix=prefix)
+app.include_router(auth.router , prefix=prefix)
+
+@app.get("/api/ping")
 async def ping():
     return {"ping": "pong"}
 

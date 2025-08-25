@@ -7,7 +7,7 @@ services:
     depends_on:
       - backend
     networks:
-      - quiz-net
+      - quiz-network
     env_file:
       - .env
 
@@ -47,7 +47,6 @@ services:
 networks:
   quiz-network:
     driver: bridge
-  quiz-net:
 
 volumes:
   postgres_data:

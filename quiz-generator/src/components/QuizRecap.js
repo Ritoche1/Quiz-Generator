@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:5000';
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}` : 'http://localhost:5000';
 
 export default function QuizRecap({ quiz, selectedAnswers, onRestart }) {
   const didMountRef = useRef(false);

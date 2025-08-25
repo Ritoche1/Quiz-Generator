@@ -8,7 +8,7 @@ import AuthForm from '@/components/AuthForm';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:5000';
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}/api` : 'http://localhost:5000';
 
 export default function Home({ initialQuiz = null}) {
   const [quiz, setQuiz] = useState(initialQuiz);
