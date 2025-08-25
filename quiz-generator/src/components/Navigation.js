@@ -125,11 +125,9 @@ export default function Navigation({ user, onRedoQuiz, onNewQuiz }) {
                     {!user && (
                         // Login Button - Right Side
                         <div className="flex-1 flex items-center justify-end gap-4 ml-auto">
-                        <Link href="/">
-                            <a className="text-white hover:bg-white/10 px-4 py-2 rounded-lg transition-colors">
-                            Login
-                            </a>
-                        </Link>
+                            <Link href="/" className="text-white hover:bg-white/10 px-4 py-2 rounded-lg transition-colors">
+                                Login
+                            </Link>
                         </div>
                     )}
                 </div>
