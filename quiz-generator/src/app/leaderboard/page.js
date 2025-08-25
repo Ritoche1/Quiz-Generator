@@ -46,7 +46,26 @@ export default function Leaderboard() {
 
   const fetchLeaderboard = async () => {
     try {
-      // For now, we'll generate mock data since we need to implement the backend endpoints
+      const [easyResponse, mediumResponse, hardResponse] = await Promise.all([
+        fetch(`${baseUrl}/quizzes/leaderboard/easy`),
+        fetch(`${baseUrl}/quizzes/leaderboard/medium`),
+        fetch(`${baseUrl}/quizzes/leaderboard/hard`)
+      ]);
+
+      const [easyData, mediumData, hardData] = await Promise.all([
+        easyResponse.json(),
+        mediumResponse.json(), 
+        hardResponse.json()
+      ]);
+
+      setLeaderboardData({
+        easy: easyData,
+        medium: mediumData,
+        hard: hardData
+      });
+    } catch (error) {
+      console.error('Error fetching leaderboard:', error);
+      // Fall back to mock data if API fails
       const mockData = {
         easy: [
           { username: 'QuizMaster', score: 95, totalQuizzes: 12, avgScore: 92 },
@@ -71,14 +90,17 @@ export default function Leaderboard() {
         ]
       };
       setLeaderboardData(mockData);
-    } catch (error) {
-      console.error('Error fetching leaderboard:', error);
     }
   };
 
   const fetchStats = async () => {
     try {
-      // Mock global stats
+      const response = await fetch(`${baseUrl}/quizzes/stats/global`);
+      const data = await response.json();
+      setStats(data);
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+      // Fall back to mock stats
       const mockStats = {
         totalQuizzes: 1247,
         totalUsers: 523,
@@ -86,8 +108,6 @@ export default function Leaderboard() {
         topicOfTheWeek: 'JavaScript Fundamentals'
       };
       setStats(mockStats);
-    } catch (error) {
-      console.error('Error fetching stats:', error);
     }
   };
 

@@ -47,7 +47,12 @@ export default function BrowseQuizzes() {
 
   const fetchQuizzes = async () => {
     try {
-      // Mock data for now - will implement real API call later
+      const response = await fetch(`${baseUrl}/quizzes/browse/public`);
+      const data = await response.json();
+      setQuizzes(data);
+    } catch (error) {
+      console.error('Error fetching quizzes:', error);
+      // Fall back to mock data if API fails
       const mockQuizzes = [
         {
           id: 1,
@@ -129,8 +134,6 @@ export default function BrowseQuizzes() {
         }
       ];
       setQuizzes(mockQuizzes);
-    } catch (error) {
-      console.error('Error fetching quizzes:', error);
     }
   };
 

@@ -162,27 +162,39 @@ export default function QuizEditor() {
     alert('Preview functionality would open in a modal or new page');
   };
 
-  const importFromTemplate = () => {
-    const template = {
-      title: 'Sample Quiz',
-      description: 'A sample quiz to help you get started',
-      language: 'English',
-      difficulty: 'easy',
-      questions: [
-        {
-          question: 'What is the capital of France?',
-          options: ['London', 'Berlin', 'Paris', 'Madrid'],
-          answer: 'Paris'
-        },
-        {
-          question: 'Which programming language is known for web development?',
-          options: ['Python', 'JavaScript', 'C++', 'Java'],
-          answer: 'JavaScript'
-        }
-      ]
-    };
-    setQuiz(template);
-    setCurrentQuestionIndex(0);
+  const importFromTemplate = async () => {
+    try {
+      const response = await fetch(`${baseUrl}/editor/templates`);
+      const templates = await response.json();
+      
+      // For now, use the first template - in a real app, we'd show a selection dialog
+      const template = templates[0];
+      setQuiz(template);
+      setCurrentQuestionIndex(0);
+    } catch (error) {
+      console.error('Error loading templates:', error);
+      // Fallback template
+      const template = {
+        title: 'Sample Quiz',
+        description: 'A sample quiz to help you get started',
+        language: 'English',
+        difficulty: 'easy',
+        questions: [
+          {
+            question: 'What is the capital of France?',
+            options: ['London', 'Berlin', 'Paris', 'Madrid'],
+            answer: 'Paris'
+          },
+          {
+            question: 'Which programming language is known for web development?',
+            options: ['Python', 'JavaScript', 'C++', 'Java'],
+            answer: 'JavaScript'
+          }
+        ]
+      };
+      setQuiz(template);
+      setCurrentQuestionIndex(0);
+    }
   };
 
   if (loading) {

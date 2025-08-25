@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Dict
+from typing import List, Dict, Optional
 from datetime import datetime
 
 class QuestionSchema(BaseModel):
@@ -13,6 +13,13 @@ class QuizCreate(BaseModel):
     language: str
     difficulty: str
     questions: List[QuestionSchema]
+
+class QuizUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    language: Optional[str] = None
+    difficulty: Optional[str] = None
+    questions: Optional[List[QuestionSchema]] = None
 
 class QuizResponse(BaseModel):
     id: int

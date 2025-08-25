@@ -1,11 +1,14 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}` : 'http://localhost:5000';
 
 export default function QuizRecap({ quiz, selectedAnswers, onRestart }) {
   const didMountRef = useRef(false);
+  const [showingReport, setShowingReport] = useState(false);
+  const [generateStatus, setGenerateStatus] = useState('');
+
   const calculateScore = () => {
     let score = 0;
     quiz.questions.forEach((question, index) => {
@@ -14,6 +17,26 @@ export default function QuizRecap({ quiz, selectedAnswers, onRestart }) {
       }
     });
     return score;
+  };
+
+  const getScorePercentage = () => {
+    return Math.round((calculateScore() / quiz.questions.length) * 100);
+  };
+
+  const getPerformanceColor = () => {
+    const percentage = getScorePercentage();
+    if (percentage >= 80) return 'text-green-600';
+    if (percentage >= 60) return 'text-yellow-600';
+    return 'text-red-600';
+  };
+
+  const getPerformanceMessage = () => {
+    const percentage = getScorePercentage();
+    if (percentage >= 90) return '🎉 Excellent! Outstanding performance!';
+    if (percentage >= 80) return '👏 Great job! Well done!';
+    if (percentage >= 60) return '👍 Good work! Keep it up!';
+    if (percentage >= 40) return '💪 Not bad! Room for improvement!';
+    return '📚 Keep studying! You can do better!';
   };
 
   const submitQuizAttempt = async () => {
@@ -84,12 +107,220 @@ export default function QuizRecap({ quiz, selectedAnswers, onRestart }) {
     }
   }
 
+  const generateQuizReport = async () => {
+    setGenerateStatus('generating');
+    try {
+      // Simulate report generation
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const reportContent = generateReportContent();
+      downloadReport(reportContent, 'quiz-report.html');
+      
+      setGenerateStatus('success');
+      setTimeout(() => setGenerateStatus(''), 3000);
+    } catch (error) {
+      setGenerateStatus('error');
+      setTimeout(() => setGenerateStatus(''), 3000);
+      console.error('Error generating report:', error);
+    }
+  };
+
+  const generateEmptyQuiz = async () => {
+    setGenerateStatus('generating-empty');
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      const emptyQuizContent = generateEmptyQuizContent();
+      downloadReport(emptyQuizContent, 'quiz-worksheet.html');
+      
+      setGenerateStatus('success');
+      setTimeout(() => setGenerateStatus(''), 3000);
+    } catch (error) {
+      setGenerateStatus('error');
+      setTimeout(() => setGenerateStatus(''), 3000);
+      console.error('Error generating empty quiz:', error);
+    }
+  };
+
+  const generateReportContent = () => {
+    const score = calculateScore();
+    const percentage = getScorePercentage();
+    
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Report - ${quiz.title}</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 20px; padding: 40px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+        .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #f0f0f0; padding-bottom: 30px; }
+        .score-circle { width: 120px; height: 120px; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; color: white; background: linear-gradient(135deg, #4ade80, #22c55e); }
+        .score-details { background: #f8fafc; padding: 20px; border-radius: 12px; margin: 20px 0; }
+        .question-review { margin: 20px 0; padding: 20px; border-radius: 12px; border-left: 4px solid #e5e7eb; }
+        .correct { border-left-color: #22c55e; background: #f0fdf4; }
+        .incorrect { border-left-color: #ef4444; background: #fef2f2; }
+        .question-title { font-weight: bold; margin-bottom: 10px; color: #1f2937; }
+        .answer { margin: 5px 0; }
+        .correct-answer { color: #22c55e; font-weight: 600; }
+        .incorrect-answer { color: #ef4444; font-weight: 600; }
+        .footer { text-align: center; margin-top: 40px; color: #6b7280; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>${quiz.title}</h1>
+            <p>Quiz Report Generated on ${new Date().toLocaleDateString()}</p>
+            <div class="score-circle">${percentage}%</div>
+            <h2>Score: ${score}/${quiz.questions.length}</h2>
+        </div>
+        
+        <div class="score-details">
+            <h3>Performance Summary</h3>
+            <p><strong>Language:</strong> ${quiz.language}</p>
+            <p><strong>Difficulty:</strong> ${quiz.difficulty.charAt(0).toUpperCase() + quiz.difficulty.slice(1)}</p>
+            <p><strong>Total Questions:</strong> ${quiz.questions.length}</p>
+            <p><strong>Correct Answers:</strong> ${score}</p>
+            <p><strong>Accuracy:</strong> ${percentage}%</p>
+            <p><strong>Performance:</strong> ${getPerformanceMessage()}</p>
+        </div>
+
+        <h3>Question Review</h3>
+        ${quiz.questions.map((question, index) => {
+          const isCorrect = selectedAnswers[index] === question.answer;
+          return `
+            <div class="question-review ${isCorrect ? 'correct' : 'incorrect'}">
+                <div class="question-title">Question ${index + 1}: ${question.question}</div>
+                <div class="answer">Your answer: <span class="${isCorrect ? 'correct-answer' : 'incorrect-answer'}">${selectedAnswers[index] || 'No answer'}</span></div>
+                <div class="answer">Correct answer: <span class="correct-answer">${question.answer}</span></div>
+                <div style="margin-top: 10px;">
+                    <strong>Options:</strong> ${question.options.join(', ')}
+                </div>
+            </div>
+          `;
+        }).join('')}
+
+        <div class="footer">
+            <p>Generated by Quiz Generator - AI-Powered Learning Platform</p>
+            <p>Keep practicing to improve your knowledge!</p>
+        </div>
+    </div>
+</body>
+</html>`;
+  };
+
+  const generateEmptyQuizContent = () => {
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${quiz.title} - Worksheet</title>
+    <style>
+        body { font-family: 'Times New Roman', serif; margin: 0; padding: 40px; line-height: 1.6; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #000; padding-bottom: 20px; }
+        .question { margin: 30px 0; page-break-inside: avoid; }
+        .question-number { font-weight: bold; margin-bottom: 10px; }
+        .options { margin: 15px 0; }
+        .option { margin: 8px 0; display: flex; align-items: center; }
+        .option-box { width: 15px; height: 15px; border: 2px solid #000; margin-right: 10px; display: inline-block; }
+        .answer-space { margin-top: 20px; border-bottom: 1px solid #ccc; min-height: 25px; }
+        .instructions { background: #f5f5f5; padding: 20px; margin-bottom: 30px; border-radius: 5px; }
+        .footer { margin-top: 50px; text-align: center; font-size: 12px; color: #666; }
+        .answers-page { page-break-before: always; margin-top: 50px; }
+        @media print { body { margin: 20px; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>${quiz.title}</h1>
+            <p>Difficulty: ${quiz.difficulty.charAt(0).toUpperCase() + quiz.difficulty.slice(1)} | Language: ${quiz.language}</p>
+            <p>Total Questions: ${quiz.questions.length}</p>
+        </div>
+
+        <div class="instructions">
+            <h3>Instructions:</h3>
+            <ul>
+                <li>Answer all questions by selecting the best option</li>
+                <li>Fill in the box next to your chosen answer</li>
+                <li>Use pencil so you can erase and correct mistakes</li>
+                <li>Check your answers on the last page when complete</li>
+            </ul>
+            <p><strong>Name:</strong> _________________________ <strong>Date:</strong> _____________</p>
+        </div>
+
+        ${quiz.questions.map((question, index) => `
+            <div class="question">
+                <div class="question-number">Question ${index + 1}:</div>
+                <div style="margin-bottom: 15px; font-weight: 500;">${question.question}</div>
+                <div class="options">
+                    ${question.options.map((option, optIndex) => `
+                        <div class="option">
+                            <span class="option-box"></span>
+                            <span>${String.fromCharCode(65 + optIndex)}. ${option}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `).join('')}
+
+        <div class="answers-page">
+            <div class="header">
+                <h2>Answer Key</h2>
+                <p><em>For Teacher/Self-Check Use Only</em></p>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                ${quiz.questions.map((question, index) => {
+                  const correctIndex = question.options.indexOf(question.answer);
+                  return `
+                    <div style="padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                        <strong>Q${index + 1}:</strong> ${String.fromCharCode(65 + correctIndex)} - ${question.answer}
+                    </div>
+                  `;
+                }).join('')}
+            </div>
+
+            <div style="margin-top: 30px; padding: 20px; background: #f9f9f9; border-radius: 5px;">
+                <h3>Scoring Guide:</h3>
+                <p>• 90-100%: Excellent (A)</p>
+                <p>• 80-89%: Good (B)</p>
+                <p>• 70-79%: Satisfactory (C)</p>
+                <p>• 60-69%: Needs Improvement (D)</p>
+                <p>• Below 60%: Additional Study Required (F)</p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Generated by Quiz Generator - Educational Tools Platform</p>
+        </div>
+    </div>
+</body>
+</html>`;
+  };
+
+  const downloadReport = (content, filename) => {
+    const blob = new Blob([content], { type: 'text/html' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  };
 
   useEffect(() => {
     if (didMountRef.current) return;
     didMountRef.current = true;
 
-    
     if (quiz.difficulty === "redo") {
       submitUserScore(quiz.id, true);
       return;
@@ -100,27 +331,188 @@ export default function QuizRecap({ quiz, selectedAnswers, onRestart }) {
     }
   }, []);
 
-  return (
-    <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-lg text-black">
-      <h2 className="text-2xl font-bold mb-4">Quiz Recap</h2>
-      <p className="mb-4">
-        You scored {calculateScore()} out of {quiz.questions.length}.
-      </p>
-      {quiz.questions.map((question, index) => (
-        <div key={index} className="mb-4">
-          <p className="font-bold">{question.question}</p>
-          <p className={selectedAnswers[index] === question.answer ? 'text-green-600' : 'text-red-600'}>
-            Your answer: {selectedAnswers[index]}
-          </p>
-          <p>Correct answer: {question.answer}</p>
+  if (showingReport) {
+    return (
+      <div className="w-full max-w-4xl glass-card p-8 rounded-2xl">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold text-gray-800 mb-4">📊 Detailed Report</h2>
+          <button
+            onClick={() => setShowingReport(false)}
+            className="btn-secondary mb-6"
+          >
+            ← Back to Summary
+          </button>
         </div>
-      ))}
-      <button
-        onClick={onRestart}
-        className="w-full bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      >
-        Start Over
-      </button>
+
+        <div className="space-y-6">
+          {quiz.questions.map((question, index) => {
+            const isCorrect = selectedAnswers[index] === question.answer;
+            return (
+              <div
+                key={index}
+                className={`p-6 rounded-xl border-l-4 ${
+                  isCorrect 
+                    ? 'border-green-500 bg-green-50' 
+                    : 'border-red-500 bg-red-50'
+                }`}
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <h4 className="text-lg font-semibold text-gray-800">
+                    Question {index + 1}
+                  </h4>
+                  <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    isCorrect 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    {isCorrect ? '✓ Correct' : '✗ Incorrect'}
+                  </div>
+                </div>
+                
+                <p className="text-gray-700 mb-4 font-medium">{question.question}</p>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <span className="font-medium text-gray-600">Your answer:</span>
+                    <span className={`font-semibold ${
+                      isCorrect ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      {selectedAnswers[index] || 'No answer provided'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="font-medium text-gray-600">Correct answer:</span>
+                    <span className="font-semibold text-green-600">
+                      {question.answer}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full max-w-2xl glass-card p-8 rounded-2xl">
+      {/* Status Messages */}
+      {generateStatus && (
+        <div className={`p-4 rounded-lg mb-6 ${
+          generateStatus.includes('success') ? 'bg-green-100 text-green-800' :
+          generateStatus.includes('error') ? 'bg-red-100 text-red-800' :
+          'bg-blue-100 text-blue-800'
+        }`}>
+          {generateStatus === 'generating' && '📄 Generating report...'}
+          {generateStatus === 'generating-empty' && '📝 Generating worksheet...'}
+          {generateStatus === 'success' && '✅ File downloaded successfully!'}
+          {generateStatus === 'error' && '❌ Error generating file. Please try again.'}
+        </div>
+      )}
+
+      <div className="text-center mb-8">
+        <h2 className="text-3xl font-bold text-gray-800 mb-2">Quiz Complete!</h2>
+        <div className={`text-6xl font-bold mb-4 ${getPerformanceColor()}`}>
+          {getScorePercentage()}%
+        </div>
+        <p className="text-xl text-gray-600 mb-2">
+          {getPerformanceMessage()}
+        </p>
+        <p className="text-gray-700">
+          You scored <span className="font-bold text-indigo-600">{calculateScore()}</span> out of <span className="font-bold">{quiz.questions.length}</span> questions
+        </p>
+      </div>
+
+      {/* Quiz Statistics */}
+      <div className="grid grid-cols-3 gap-4 mb-8">
+        <div className="text-center p-4 bg-gray-50 rounded-xl">
+          <div className="text-2xl font-bold text-green-600">{calculateScore()}</div>
+          <div className="text-sm text-gray-600">Correct</div>
+        </div>
+        <div className="text-center p-4 bg-gray-50 rounded-xl">
+          <div className="text-2xl font-bold text-red-600">{quiz.questions.length - calculateScore()}</div>
+          <div className="text-sm text-gray-600">Incorrect</div>
+        </div>
+        <div className="text-center p-4 bg-gray-50 rounded-xl">
+          <div className="text-2xl font-bold text-blue-600">{quiz.questions.length}</div>
+          <div className="text-sm text-gray-600">Total</div>
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <button
+            onClick={() => setShowingReport(true)}
+            className="flex-1 btn-secondary flex items-center justify-center gap-2"
+          >
+            <span>📊</span>
+            <span>View Detailed Report</span>
+          </button>
+          <button
+            onClick={generateQuizReport}
+            disabled={generateStatus === 'generating'}
+            className="flex-1 btn-primary flex items-center justify-center gap-2"
+          >
+            {generateStatus === 'generating' ? (
+              <>
+                <div className="loading-spinner"></div>
+                <span>Generating...</span>
+              </>
+            ) : (
+              <>
+                <span>💾</span>
+                <span>Download Report</span>
+              </>
+            )}
+          </button>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-4">
+          <button
+            onClick={generateEmptyQuiz}
+            disabled={generateStatus === 'generating-empty'}
+            className="flex-1 btn-secondary flex items-center justify-center gap-2"
+          >
+            {generateStatus === 'generating-empty' ? (
+              <>
+                <div className="loading-spinner"></div>
+                <span>Generating...</span>
+              </>
+            ) : (
+              <>
+                <span>📝</span>
+                <span>Print Worksheet</span>
+              </>
+            )}
+          </button>
+          <button
+            onClick={onRestart}
+            className="flex-1 btn-ghost flex items-center justify-center gap-2 text-gray-700 border-gray-300 hover:bg-gray-50"
+          >
+            <span>🔄</span>
+            <span>Start Over</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Quiz Info */}
+      <div className="mt-8 pt-6 border-t border-gray-200">
+        <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+          <div>
+            <span className="font-medium">Difficulty:</span> {quiz.difficulty.charAt(0).toUpperCase() + quiz.difficulty.slice(1)}
+          </div>
+          <div>
+            <span className="font-medium">Language:</span> {quiz.language}
+          </div>
+        </div>
+        <div className="text-center mt-4">
+          <p className="text-xs text-gray-500">
+            Want to try more quizzes? <a href="/browse" className="text-indigo-600 hover:text-indigo-800">Browse all quizzes</a>
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

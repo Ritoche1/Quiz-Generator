@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import quizzes, scores, generator, auth
+from app.routers import quizzes, scores, generator, auth, editor
 from database.database import engine, Base
 from database import models
 from database.database import engine
@@ -15,7 +15,7 @@ async def startup_db():
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:83", "http://quiz.ritoche.site", "https://ritoche.site", "https://quiz.ritoche.site"],
+    allow_origins=["http://localhost:83", "http://quiz.ritoche.site", "https://ritoche.site", "https://quiz.ritoche.site", "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
@@ -28,6 +28,7 @@ app.include_router(generator.router, prefix=prefix)
 app.include_router(quizzes.router , prefix=prefix)
 app.include_router(scores.router , prefix=prefix)
 app.include_router(auth.router , prefix=prefix)
+app.include_router(editor.router , prefix=prefix)
 
 @app.get("/api/ping")
 async def ping():
