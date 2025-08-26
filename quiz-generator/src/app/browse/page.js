@@ -49,92 +49,15 @@ export default function BrowseQuizzes() {
   const fetchQuizzes = async () => {
     try {
       const response = await fetch(`${baseUrl}/quizzes/browse/public`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
       setQuizzes(data);
     } catch (error) {
       console.error('Error fetching quizzes:', error);
-      // Fall back to mock data if API fails
-      const mockQuizzes = [
-        {
-          id: 1,
-          title: 'JavaScript Fundamentals',
-          description: 'Test your knowledge of JavaScript basics including variables, functions, and objects.',
-          difficulty: 'easy',
-          language: 'English',
-          questionsCount: 10,
-          attempts: 245,
-          avgScore: 78,
-          creator: 'CodeMaster',
-          created: new Date('2024-01-15'),
-          tags: ['programming', 'javascript', 'web development']
-        },
-        {
-          id: 2,
-          title: 'World History: Ancient Civilizations',
-          description: 'Explore the fascinating world of ancient civilizations from Egypt to Rome.',
-          difficulty: 'medium',
-          language: 'English',
-          questionsCount: 15,
-          attempts: 189,
-          avgScore: 65,
-          creator: 'HistoryBuff',
-          created: new Date('2024-01-12'),
-          tags: ['history', 'ancient', 'civilizations']
-        },
-        {
-          id: 3,
-          title: 'Advanced Mathematics',
-          description: 'Challenge yourself with complex mathematical problems and proofs.',
-          difficulty: 'hard',
-          language: 'English',
-          questionsCount: 12,
-          attempts: 98,
-          avgScore: 52,
-          creator: 'MathWizard',
-          created: new Date('2024-01-10'),
-          tags: ['mathematics', 'calculus', 'algebra']
-        },
-        {
-          id: 4,
-          title: 'Spanish Grammar Basics',
-          description: 'Master the fundamentals of Spanish grammar and sentence structure.',
-          difficulty: 'easy',
-          language: 'Spanish',
-          questionsCount: 8,
-          attempts: 156,
-          avgScore: 72,
-          creator: 'LinguaTeacher',
-          created: new Date('2024-01-08'),
-          tags: ['language', 'spanish', 'grammar']
-        },
-        {
-          id: 5,
-          title: 'Biology: Cell Structure',
-          description: 'Deep dive into cellular biology and understand the building blocks of life.',
-          difficulty: 'medium',
-          language: 'English',
-          questionsCount: 20,
-          attempts: 312,
-          avgScore: 69,
-          creator: 'BiologyPro',
-          created: new Date('2024-01-05'),
-          tags: ['biology', 'cells', 'science']
-        },
-        {
-          id: 6,
-          title: 'French Literature',
-          description: 'Explore the masterpieces of French literature from Molière to Camus.',
-          difficulty: 'hard',
-          language: 'French',
-          questionsCount: 18,
-          attempts: 76,
-          avgScore: 58,
-          creator: 'LiteratureExpert',
-          created: new Date('2024-01-03'),
-          tags: ['literature', 'french', 'culture']
-        }
-      ];
-      setQuizzes(mockQuizzes);
+      // For now, set empty array if API fails
+      setQuizzes([]);
     }
   };
 

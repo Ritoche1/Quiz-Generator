@@ -136,22 +136,16 @@ function NavigationImpl({ user, onRedoQuiz, onNewQuiz }) {
         <nav className="w-full nav-glass fixed top-0 z-50 pt-[env(safe-area-inset-top)]">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16">
-                    {/* Left cluster: burger always visible; other actions only if authenticated */}
+                    <div className="flex-1 flex justify-center">
+                        <Link href="/" className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+                                <span className="text-white font-bold text-sm">Q</span>
+                            </div>
+                            <span className="text-white font-bold text-xl hidden sm:block">Quiz Generator</span>
+                        </Link>
+                    </div>
+                    
                     <div className="flex items-center space-x-4">
-                        <button
-                            onClick={() => {
-                                if (!isMenuOpen && user) fetchHistory();
-                                setIsMenuOpen(!isMenuOpen);
-                            }}
-                            className="btn-ghost p-2 rounded-lg"
-                            aria-label="Open menu"
-                            aria-expanded={isMenuOpen}
-                            aria-controls="history-drawer"
-                        >
-                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                            </svg>
-                        </button>
 
                         {user && (
                             <>
@@ -174,15 +168,6 @@ function NavigationImpl({ user, onRedoQuiz, onNewQuiz }) {
                                 </div>
                             </>
                         )}
-                    </div>
-
-                    <div className="flex-1 flex justify-center">
-                        <Link href="/" className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
-                                <span className="text-white font-bold text-sm">Q</span>
-                            </div>
-                            <span className="text-white font-bold text-xl hidden sm:block">Quiz Generator</span>
-                        </Link>
                     </div>
 
                     {user ? (

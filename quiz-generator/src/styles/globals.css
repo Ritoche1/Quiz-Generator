@@ -31,13 +31,6 @@
   --gray-900: #111827;
 }
 
-/* Main Container for Centering Content */
-.main-container {
-  @apply flex flex-col items-center justify-center min-h-screen px-4 sm:px-6 lg:px-8;
-  padding-top: 2rem;
-  padding-bottom: 2rem;
-}
-
 /* Base Styles */
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
