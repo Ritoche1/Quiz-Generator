@@ -15,7 +15,8 @@ router = APIRouter(prefix="/quizzes", tags=["quizzes"])
 async def create_new_quiz(quiz: QuizCreate, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
     quiz_data = quiz.dict()
     quiz_data["questions"] = [q.dict() for q in quiz.questions]
-    # quiz_data["owner_id"] = current_user.id  # Temporarily commented out
+    # Ensure owner_id is set so creator shows up in browse/profile
+    quiz_data["owner_id"] = current_user.id
     return await create_quiz(db, quiz_data)
 
 @router.get("/", response_model=List[QuizResponse])

@@ -236,7 +236,7 @@ export default function QuizEditor() {
     try {
       // Fetch user's quiz history
       const token = localStorage.getItem('quizToken');
-      const response = await fetch(`${baseUrl}/quizzes/history`, {
+      const response = await fetch(`${baseUrl}/editor/my-quizzes`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -292,6 +292,33 @@ export default function QuizEditor() {
       setCurrentQuestionIndex(0);
     }
   };
+
+  // If URL contains ?load=<quizId> then fetch that quiz and load it into the editor
+  useEffect(() => {
+    try {
+      const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+      const loadId = params?.get('load');
+      if (!loadId) return;
+
+      const fetchAndLoad = async (id) => {
+        setLoading(true);
+        try {
+          const res = await fetch(`${baseUrl}/quizzes/${id}`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('quizToken')}` } });
+          if (!res.ok) throw new Error('Failed to fetch quiz');
+          const q = await res.json();
+          setQuiz(q);
+          setCurrentQuestionIndex(0);
+        } catch (e) {
+          console.error('Failed to load quiz from URL param:', e);
+          alert('Failed to load requested quiz');
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchAndLoad(loadId);
+    } catch (e) { /* noop */ }
+  }, []);
 
   if (loading) {
     return (

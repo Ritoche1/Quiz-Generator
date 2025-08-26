@@ -59,6 +59,19 @@ export default function ProfilePage() {
     } catch (e) { console.error('Failed to fetch history', e); }
   };
 
+  // Fetch quizzes created by the current user for management (My Quizzes)
+  const [myQuizzes, setMyQuizzes] = useState([]);
+  const fetchMyQuizzes = async () => {
+    try {
+      const res = await fetch(`${baseUrl}/editor/my-quizzes`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('quizToken')}` } });
+      if (!res.ok) throw new Error('Failed to fetch my quizzes');
+      const data = await res.json();
+      setMyQuizzes(data || []);
+    } catch (e) { console.error('Failed to fetch my quizzes', e); setMyQuizzes([]); }
+  };
+
+  useEffect(() => { if (user) fetchMyQuizzes(); }, [user]);
+
   const totals = useMemo(() => {
     if (serverPaging) {
       // With server paging, we only know the total count reliably.
@@ -229,6 +242,30 @@ export default function ProfilePage() {
                     className="btn-ghost-light px-3 py-2 disabled:opacity-50"
                   >Next</button>
                 </div>
+              </div>
+            )}
+          </div>
+
+          {/* My Quizzes Section */}
+          <div className="glass-card p-4 rounded-2xl mt-6">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">My Quizzes</h2>
+            {!myQuizzes || myQuizzes.length === 0 ? (
+              <div className="text-center py-8 text-gray-600">You haven't created any quizzes yet.</div>
+            ) : (
+              <div className="space-y-3">
+                {myQuizzes.map((q) => (
+                  <div key={q.id} className="card p-4 flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold text-gray-800 mb-1 truncate">{q.title}</h4>
+                      <div className="text-xs text-gray-600">{q.language} • {q.difficulty}</div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => router.push(`/editor?load=${q.id}`)} className="btn-ghost-light px-3 py-2 text-sm">Load</button>
+                      <button onClick={async () => { if (!confirm('Delete this quiz?')) return; try { const res = await fetch(`${baseUrl}/editor/quiz/${q.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('quizToken')}` } }); if (res.ok) { fetchMyQuizzes(); fetchHistory(); } else throw new Error('Delete failed'); } catch(e){console.error(e); alert('Failed to delete quiz')} }} className="btn-ghost-light px-3 py-2 text-sm text-red-600">Delete</button>
+                      <button onClick={async () => { try { const res = await fetch(`${baseUrl}/editor/quiz/${q.id}/duplicate`, { method: 'POST', headers: { 'Authorization': `Bearer ${localStorage.getItem('quizToken')}` } }); if (res.ok) { const dup = await res.json(); router.push(`/editor?load=${dup.id}`); } else throw new Error('Duplicate failed'); } catch(e){console.error(e); alert('Failed to duplicate') } }} className="btn-primary px-3 py-2 text-sm">Duplicate</button>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
