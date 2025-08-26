@@ -1,5 +1,4 @@
 import "@/styles/globals.css";
-import Navigation from "@/components/Navigation";
 
 export const metadata = {
   title: "Quiz Generator",
@@ -11,10 +10,17 @@ export const metadata = {
   },
 };
 
+// Use Next.js App Router viewport API instead of a manual <meta> tag
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+};
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className="antialiased">
+      <body className="antialiased min-h-screen">
         {children}
       </body>
     </html>

@@ -197,8 +197,13 @@ export default function BrowseQuizzes() {
   };
 
   const handleStartQuiz = (quiz) => {
-    // For now, redirect to home with quiz data
-    // In a full implementation, we'd start the quiz directly
+    const token = localStorage.getItem('quizToken');
+    if (!token) {
+      // Redirect unauthenticated users to login page with return path
+      const returnTo = encodeURIComponent(`/browse`);
+      window.location.href = `/?redirect=${returnTo}`;
+      return;
+    }
     window.location.href = `/?quiz=${quiz.id}`;
   };
 
@@ -216,15 +221,15 @@ export default function BrowseQuizzes() {
   return (
     <>
       <Navigation user={user} />
-      <div className="min-h-screen gradient-bg pt-16 pb-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="min-h-screen gradient-bg pt-20 pb-16 md:pb-24 safe-bottom">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           {/* Header */}
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-white mb-4 flex items-center justify-center gap-3">
+          <div className="text-center mb-8 sm:mb-12">
+            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3 sm:mb-4 flex items-center justify-center gap-3">
               <span>🎯</span>
               Browse Quizzes
             </h1>
-            <p className="text-white/80 text-lg">
+            <p className="text-white/80 text-base sm:text-lg">
               Discover and take quizzes created by the community
             </p>
           </div>
@@ -329,7 +334,7 @@ export default function BrowseQuizzes() {
                   </div>
 
                   {/* Stats */}
-                  <div className="grid grid-cols-3 gap-4 mb-4 text-center">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4 text-center">
                     <div>
                       <div className="text-lg font-bold text-indigo-600">{quiz.questionsCount}</div>
                       <div className="text-xs text-gray-500">Questions</div>

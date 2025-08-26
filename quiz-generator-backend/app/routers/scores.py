@@ -1,11 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from database.database import get_db
 from database.models import User
 from app.routers.auth import get_current_user
 from crud.score_crud import *
 from schemas.score import *
-from typing import List
+from typing import List, Optional
 
 router = APIRouter(prefix="/scores", tags=["scores"])
 
@@ -42,12 +42,46 @@ async def get_quiz_scores(
         raise HTTPException(status_code=404, detail="Score not found")
     return reponse
 
-
-@router.get("/user/history", response_model=List[dict])
-async def get_user_history(
+@router.get("/attempt/{score_id}", response_model=ScoreResponse)
+async def get_attempt(
+    score_id: int,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    from crud.score_crud import get_score_by_id
+    score = await get_score_by_id(db, score_id, current_user.id)
+    if not score:
+        raise HTTPException(status_code=404, detail="Score not found")
+    return score
+
+@router.get("/user/history")
+async def get_user_history(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    offset: Optional[int] = Query(None, ge=0),
+    limit: Optional[int] = Query(None, ge=1, le=100)
+):
+    # If pagination params provided, return paginated payload
+    if offset is not None and limit is not None:
+        items_result, total = await get_user_scores_paginated(db, current_user.id, offset, limit)
+        items = [{
+            "score_id": score.id,
+            "quiz_id": score.quiz_id,
+            "language": language,
+            "difficulty": difficulty,
+            "title": title,
+            "score": score.score,
+            "max_score": score.max_score,
+            "date": score.created_at
+        } for score, title, language, difficulty in items_result.all()]
+        return {
+            "items": items,
+            "total": total,
+            "offset": offset,
+            "limit": limit
+        }
+
+    # Backward-compatible list response
     result = await get_user_scores(db, current_user.id)
     return [{
         "score_id": score.id,

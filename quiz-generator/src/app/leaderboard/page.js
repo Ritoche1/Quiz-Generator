@@ -144,15 +144,15 @@ export default function Leaderboard() {
   return (
     <>
       <Navigation user={user} />
-      <div className="min-h-screen gradient-bg pt-16 pb-8">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="min-h-screen gradient-bg pt-20 pb-16 md:pb-24 safe-bottom">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           {/* Header */}
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-white mb-4 flex items-center justify-center gap-3">
+          <div className="text-center mb-8 sm:mb-12">
+            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3 sm:mb-4 flex items-center justify-center gap-3">
               <span>🏆</span>
               Leaderboard
             </h1>
-            <p className="text-white/80 text-lg">
+            <p className="text-white/80 text-base sm:text-lg">
               Compete with quiz masters from around the world
             </p>
           </div>

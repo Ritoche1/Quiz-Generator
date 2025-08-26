@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from database.models import UserScore, Quiz
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, func
 
 async def create_score(db: AsyncSession, score_data: dict):
     new_score = UserScore(**score_data)
@@ -42,6 +42,26 @@ async def get_user_scores(db: AsyncSession, user_id: int):
     )
     return result
 
+async def get_user_scores_paginated(db: AsyncSession, user_id: int, offset: int, limit: int):
+    # Total count (without join for efficiency)
+    total_result = await db.execute(
+        select(func.count()).select_from(
+            select(UserScore.id).where(UserScore.user_id == user_id).subquery()
+        )
+    )
+    total = total_result.scalar() or 0
+
+    # Paged items with quiz info
+    items_result = await db.execute(
+        select(UserScore, Quiz.title, Quiz.language, Quiz.difficulty)
+        .join(Quiz, UserScore.quiz_id == Quiz.id)
+        .where(UserScore.user_id == user_id)
+        .order_by(UserScore.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+    )
+    return items_result, total
+
 async def delete_score_db(db: AsyncSession, score_id: int, user_id: int):
 
     score = await db.get(UserScore, score_id)
@@ -55,3 +75,11 @@ async def delete_score_db(db: AsyncSession, score_id: int, user_id: int):
         print("Error during deletion:", e)
         return None
     return score
+
+async def get_score_by_id(db: AsyncSession, score_id: int, user_id: int):
+    result = await db.execute(
+        select(UserScore)
+        .where(UserScore.id == score_id)
+        .where(UserScore.user_id == user_id)
+    )
+    return result.scalars().first()

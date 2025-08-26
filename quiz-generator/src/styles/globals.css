@@ -51,6 +51,14 @@ body {
   100% { background-position: 0% 50%; }
 }
 
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .gradient-bg { animation: none; }
+  .hover-lift { transition: none; }
+  .hover-glow { transition: none; }
+  #history-drawer { transition: none !important; }
+}
+
 /* Dynamic States */
 .bg-default {
   --bg-start: #667eea;
@@ -104,6 +112,18 @@ body {
   @apply bg-transparent hover:bg-white/10 text-white;
   @apply border border-white/20 hover:border-white/40;
   @apply px-4 py-2 rounded-lg transition-all duration-300;
+}
+
+/* New: light variant for ghost buttons on white backgrounds */
+.btn-ghost-light {
+  @apply bg-transparent text-gray-700;
+  @apply border border-gray-300 hover:border-gray-400 hover:bg-gray-50;
+  @apply px-4 py-2 rounded-lg transition-all duration-300;
+}
+
+/* Larger touch targets on mobile */
+@media (max-width: 640px) {
+  .btn-primary, .btn-secondary, .btn-ghost, .btn-ghost-light { min-height: 44px; }
 }
 
 /* Enhanced Card Styles */
@@ -209,6 +229,29 @@ body {
 .option-button.incorrect {
   @apply border-red-500 bg-red-100 text-red-800;
 }
+
+/* Safe area helpers */
+:root { 
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.safe-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+}
+/* Add top safe-area padding utility for notched devices */
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Define custom utility previously used in markup */
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
+/* Mobile drawer animation */
+#history-drawer { transition: transform 0.3s ease; }
+
+/* Prevent footer overlap by ensuring bottom padding on main containers */
+.page-shell { padding-bottom: 5rem; }
 
 /* Responsive Utilities */
 @media (max-width: 640px) {

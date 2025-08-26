@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import QuizGenerator from '@/components/QuizGenerator';
 import QuizQuestion from '@/components/QuizQuestion';
 import QuizRecap from '@/components/QuizRecap';
@@ -22,6 +22,71 @@ export default function Home({ initialQuiz = null}) {
   const [error, setError] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [resumeState, setResumeState] = useState(null);
+  const [sessionStreak, setSessionStreak] = useState(0);
+  const [dailyStreak, setDailyStreak] = useState(0);
+
+  // Key for storing in-progress session
+  const storageKey = 'inProgressQuiz';
+
+  const todayKey = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  };
+  const ydayKey = () => {
+    const d = new Date();
+    d.setDate(d.getDate()-1);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  };
+  const loadDailyStreak = () => {
+    try {
+      const raw = localStorage.getItem('dailyStreak');
+      if (!raw) return { count: 0, lastDate: null };
+      return JSON.parse(raw);
+    } catch { return { count: 0, lastDate: null }; }
+  };
+  const saveDailyStreak = (s) => { try { localStorage.setItem('dailyStreak', JSON.stringify(s)); } catch {} };
+
+  useEffect(() => {
+    const s = loadDailyStreak();
+    setDailyStreak(s?.count || 0);
+  }, []);
+
+  // Fetch a quiz by id from URL param (e.g., /?quiz=123)
+  useEffect(() => {
+    const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+    const quizId = params?.get('quiz');
+    if (!quizId) return;
+
+    const fetchQuizById = async (id) => {
+      try {
+        const res = await fetch(`${baseUrl}/quizzes/${id}`);
+        if (!res.ok) throw new Error('Failed to fetch quiz');
+        const data = await res.json();
+        // Normalize shape for the player
+        setQuiz({
+          id: data.id,
+          title: data.title,
+          language: data.language,
+          difficulty: data.difficulty,
+          questions: data.questions || [],
+        });
+        setCurrentQuestionIndex(0);
+        setSelectedAnswers({});
+        setShowRecap(false);
+        setIsCorrect(null);
+        setShowFeedback(false);
+        setBgClass('bg-default');
+        setSessionStreak(0);
+      } catch (e) {
+        console.error('Error loading quiz from URL param:', e);
+        // If loading the quiz fails, clear the param-driven state
+        setQuiz(null);
+      }
+    };
+
+    fetchQuizById(quizId);
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -41,6 +106,13 @@ export default function Home({ initialQuiz = null}) {
         .then(data => {
             setUser(data);
             setIsAuthenticated(true);
+            // If redirected here after login, go back to target
+            const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+            const redirectTo = params?.get('redirect');
+            if (redirectTo) {
+              window.history.replaceState({}, '', '/');
+              window.location.href = redirectTo;
+            }
         })
         .catch(error => {
             // Clear invalid token
@@ -55,6 +127,28 @@ export default function Home({ initialQuiz = null}) {
     setLoading(false);
   }, [isAuthenticated]);
 
+  // Load any in-progress state once authenticated and not currently in a quiz
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    if (quiz || showRecap) return;
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (!parsed || !parsed.quiz || !Array.isArray(parsed.quiz.questions)) return;
+      setResumeState(parsed);
+    } catch {}
+  }, [isAuthenticated]);
+
+  // Persist in-progress state when answering or navigating
+  useEffect(() => {
+    if (!quiz || showRecap) return;
+    try {
+      const payload = JSON.stringify({ quiz, currentQuestionIndex, selectedAnswers });
+      localStorage.setItem(storageKey, payload);
+    } catch {}
+  }, [quiz, currentQuestionIndex, selectedAnswers, showRecap]);
+
   const handleLogin = () => {
       setIsAuthenticated(true);
   };
@@ -64,6 +158,7 @@ export default function Home({ initialQuiz = null}) {
       setError('No questions found. Please try again.');
       return;
     }
+    setError(null);
     setQuiz(quizData);
     setCurrentQuestionIndex(0);
     setSelectedAnswers({});
@@ -71,6 +166,8 @@ export default function Home({ initialQuiz = null}) {
     setIsCorrect(null);
     setShowFeedback(false);
     setBgClass('bg-default');
+    setResumeState(null);
+    setSessionStreak(0);
   };
   
   const handleAnswer = (answer) => {
@@ -79,6 +176,7 @@ export default function Home({ initialQuiz = null}) {
     setIsCorrect(isAnswerCorrect);
     setShowFeedback(true);
     setBgClass(isAnswerCorrect ? 'bg-correct' : 'bg-incorrect');
+    setSessionStreak(prev => isAnswerCorrect ? prev + 1 : 0);
     
     setSelectedAnswers((prev) => ({
       ...prev,
@@ -86,6 +184,20 @@ export default function Home({ initialQuiz = null}) {
     }));
   };
   
+  const updateDailyStreakOnFinish = () => {
+    const info = loadDailyStreak();
+    const today = todayKey();
+    const yday = ydayKey();
+    let next = { count: 1, lastDate: today };
+    if (info?.lastDate === today) {
+      next = { count: info.count || 1, lastDate: today };
+    } else if (info?.lastDate === yday) {
+      next = { count: (info.count || 0) + 1, lastDate: today };
+    }
+    saveDailyStreak(next);
+    setDailyStreak(next.count || 0);
+  };
+
   const handleNextQuestion = () => {
     if (currentQuestionIndex < quiz.questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
@@ -93,7 +205,9 @@ export default function Home({ initialQuiz = null}) {
       setShowFeedback(false);
       setBgClass('bg-default');
     } else {
+      updateDailyStreakOnFinish();
       setShowRecap(true);
+      try { localStorage.removeItem(storageKey); } catch {}
     }
   };
   
@@ -105,6 +219,9 @@ export default function Home({ initialQuiz = null}) {
     setIsCorrect(null);
     setShowFeedback(false);
     setBgClass('bg-default');
+    setResumeState(null);
+    setSessionStreak(0);
+    try { localStorage.removeItem(storageKey); } catch {}
   };
 
   const handleRedoQuiz = (quizData) => {
@@ -125,7 +242,66 @@ export default function Home({ initialQuiz = null}) {
     setIsCorrect(null);
     setShowFeedback(false);
     setBgClass('bg-default');
+    setResumeState(null);
+    setSessionStreak(0);
+    try { localStorage.removeItem(storageKey); } catch {}
 };
+
+  const resumeBanner = useMemo(() => {
+    if (!resumeState || quiz) return null;
+    try {
+      const total = resumeState.quiz?.questions?.length || 0;
+      const idx = resumeState.currentQuestionIndex || 0;
+      return (
+        <div className="w-full max-w-md bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-lg text-gray-900 mb-4">
+          <div className="flex items-start gap-3">
+            <div className="text-2xl">⏸️</div>
+            <div className="flex-1">
+              <div className="font-semibold">Resume previous quiz?</div>
+              <div className="text-sm text-gray-700">You were on question {idx + 1} of {total}.</div>
+              <div className="mt-3 flex gap-2">
+                <button
+                  onClick={() => {
+                    setQuiz(resumeState.quiz);
+                    setCurrentQuestionIndex(resumeState.currentQuestionIndex || 0);
+                    setSelectedAnswers(resumeState.selectedAnswers || {});
+                    setResumeState(null);
+                  }}
+                  className="btn-primary px-3 py-2 text-sm"
+                >Resume</button>
+                <button
+                  onClick={() => { setResumeState(null); try { localStorage.removeItem(storageKey); } catch {} }}
+                  className="btn-ghost-light px-3 py-2 text-sm"
+                >Discard</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    } catch { return null; }
+  }, [resumeState, quiz]);
+
+  const progressUI = useMemo(() => {
+    if (!quiz || showRecap) return null;
+    const total = quiz.questions?.length || 0;
+    const answered = Math.min(currentQuestionIndex + (showFeedback ? 1 : 0), total);
+    const pct = total ? Math.round((answered / total) * 100) : 0;
+    return (
+      <div className="w-full max-w-md bg-white/90 backdrop-blur-sm rounded-lg p-3 mb-4 text-gray-900 shadow">
+        <div className="flex items-center justify-between text-sm mb-2">
+          <span>Question {Math.min(currentQuestionIndex + 1, total)} / {total}</span>
+          <span className="font-medium">{pct}%</span>
+        </div>
+        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden" aria-label="Progress bar" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+          <div className="h-full bg-indigo-600 transition-all" style={{ width: `${pct}%` }} />
+        </div>
+        <div className="mt-2 flex items-center gap-2 text-xs">
+          <span className="px-2 py-1 rounded-full bg-green-100 text-green-700">🔥 Streak: {sessionStreak}</span>
+          <span className="px-2 py-1 rounded-full bg-indigo-100 text-indigo-700">📅 Daily: {dailyStreak}</span>
+        </div>
+      </div>
+    );
+  }, [quiz, showRecap, currentQuestionIndex, showFeedback, sessionStreak, dailyStreak]);
   
   if (loading) return <div className="min-h-screen bg-default flex items-center justify-center">Loading...</div>;
   
@@ -133,9 +309,17 @@ export default function Home({ initialQuiz = null}) {
   return (
     <>
       <Navigation user={user} onRedoQuiz={handleRedoQuiz} onNewQuiz={handleRestart}/>
-      <div className={`min-h-screen pb-16 gradient-bg flex flex-col items-center justify-center text-white p-4 ${bgClass} transition-all duration-2000`}>
+      <div className={`min-h-screen page-shell gradient-bg pt-20 pb-16 md:pb-24 safe-bottom flex flex-col items-center justify-start md:justify-center text-white p-4 ${bgClass} transition-all duration-2000`}>
+        {/* Top daily streak chip when idle */}
+        {!quiz && isAuthenticated && (
+          <div className="w-full max-w-md mb-4 flex justify-end">
+            <span className="px-3 py-1 rounded-full bg-white/90 backdrop-blur text-indigo-700 text-sm shadow">📅 Daily streak: {dailyStreak}</span>
+          </div>
+        )}
+        {resumeBanner}
         {isAuthenticated && quiz && quiz.questions && quiz.questions.length > 0 && !showRecap ? (
           <>
+            {progressUI}
             <QuizQuestion
               question={quiz.questions[currentQuestionIndex].question}
               options={quiz.questions[currentQuestionIndex].options}

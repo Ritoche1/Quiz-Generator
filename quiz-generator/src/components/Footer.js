@@ -3,13 +3,13 @@
 
 export default function Footer() {
   return (
-    <footer className="fixed bottom-0 w-full bg-white/10 backdrop-blur-md border-t border-white/20 mt-auto">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-center">
+    <footer className="w-full bg-white/10 backdrop-blur-md border-t border-white/20 mt-auto md:fixed md:bottom-0">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-center gap-2 pb-[max(env(safe-area-inset-bottom),1rem)]">
         <a
           href="https://github.com/ritoche1/quiz-generator"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-white hover:text-blue-300 transition-colors flex items-center gap-2"
+          className="text-white hover:text-blue-300 transition-colors flex items-center gap-2 touch-manipulation"
         >
           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
             <path
@@ -20,12 +20,12 @@ export default function Footer() {
           </svg>
           <span>Making by heart by Ritoche1 </span>
         </a>
-        <span className="text-white">|</span>
+        <span className="hidden sm:inline text-white">|</span>
         <a
           href="https://mistral.ai/"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-white hover:text-blue-300 transition-colors"
+          className="text-white hover:text-blue-300 transition-colors touch-manipulation"
         >
             <span>Mistral AI</span>
         </a>

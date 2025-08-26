@@ -12,6 +12,7 @@ class ScoreResponse(BaseModel):
     user_id: int
     score: int
     max_score: int
+    answers: dict
     created_at: datetime
 
 class ScoreUpdate(BaseModel):
