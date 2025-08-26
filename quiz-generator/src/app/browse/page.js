@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import Navigation from '@/components/Navigation';
+import { useRouter } from 'next/navigation';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}` : 'http://localhost:5000';
 
@@ -13,6 +13,7 @@ export default function BrowseQuizzes() {
   const [selectedDifficulty, setSelectedDifficulty] = useState('all');
   const [selectedLanguage, setSelectedLanguage] = useState('all');
   const [sortBy, setSortBy] = useState('created');
+  const router = useRouter();
 
   const languages = ['all', 'English', 'Spanish', 'French', 'German', 'Italian', 'Portuguese', 'Dutch', 'Russian', 'Japanese', 'Korean', 'Chinese', 'Arabic', 'Hindi', 'Turkish', 'Polish'];
 
@@ -201,10 +202,10 @@ export default function BrowseQuizzes() {
     if (!token) {
       // Redirect unauthenticated users to login page with return path
       const returnTo = encodeURIComponent(`/browse`);
-      window.location.href = `/?redirect=${returnTo}`;
+      router.push(`/?redirect=${returnTo}`);
       return;
     }
-    window.location.href = `/?quiz=${quiz.id}`;
+    router.push(`/?quiz=${quiz.id}`);
   };
 
   if (loading) {
@@ -220,7 +221,6 @@ export default function BrowseQuizzes() {
 
   return (
     <>
-      <Navigation user={user} />
       <div className="min-h-screen gradient-bg pt-20 pb-16 md:pb-24 safe-bottom">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           {/* Header */}

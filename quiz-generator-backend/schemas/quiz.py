@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import List, Dict, Optional
 from datetime import datetime
 
@@ -7,8 +7,8 @@ class QuestionSchema(BaseModel):
     options: List[str]
     answer: str
 
-    class Config:
-        orm_mode = True
+    # Pydantic v2
+    model_config = ConfigDict(from_attributes=True)
 
 class QuizCreate(BaseModel):
     title: str
@@ -33,5 +33,5 @@ class QuizResponse(BaseModel):
     questions: List[Dict]
     created_at: datetime
 
-    class Config:
-        orm_mode = True
+    # Pydantic v2
+    model_config = ConfigDict(from_attributes=True)

@@ -9,7 +9,14 @@ if not DATABASE_URL:
     DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 
 engine = create_async_engine(DATABASE_URL, echo=True)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, class_=AsyncSession)
+# Prevent instance attributes from expiring on commit to avoid async lazy-loads (MissingGreenlet)
+SessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    expire_on_commit=False,
+    bind=engine,
+    class_=AsyncSession,
+)
 
 Base = declarative_base()
 

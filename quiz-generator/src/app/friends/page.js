@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Navigation from '@/components/Navigation';
-import Footer from '@/components/Footer';
+import { useRouter } from 'next/navigation';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}` : 'http://localhost:5000';
 
@@ -15,20 +14,21 @@ export default function FriendsPage() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [busy, setBusy] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const token = localStorage.getItem('quizToken');
     if (!token) {
       const ret = encodeURIComponent('/friends');
-      window.location.href = `/?redirect=${ret}`;
+      router.push(`/?redirect=${ret}`);
       return;
     }
     fetch(`${baseUrl}/auth/me`, { headers: { 'Authorization': `Bearer ${token}` } })
       .then(r => r.ok ? r.json() : Promise.reject('auth'))
       .then(u => { setUser(u); refreshAll(); })
-      .catch(() => { const ret = encodeURIComponent('/friends'); window.location.href = `/?redirect=${ret}`; })
+      .catch(() => { const ret = encodeURIComponent('/friends'); router.push(`/?redirect=${ret}`); })
       .finally(() => setLoading(false));
-  }, []);
+  }, [router]);
 
   const refreshAll = async () => {
     const token = localStorage.getItem('quizToken');
@@ -122,7 +122,6 @@ export default function FriendsPage() {
 
   return (
     <>
-      <Navigation user={user} />
       <div className="min-h-screen gradient-bg pt-20 pb-16 md:pb-24 safe-bottom">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           <div className="text-center mb-6 sm:mb-8">
@@ -238,7 +237,6 @@ export default function FriendsPage() {
           </div>
         </div>
       </div>
-      <Footer />
     </>
   );
 }

@@ -1,26 +1,46 @@
 // File: quiz-generator/src/components/Navigation.js
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, memo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}` : 'http://localhost:5000';
 
-export default function Navigation({ user, onRedoQuiz, onNewQuiz }) {
+function NavigationImpl({ user, onRedoQuiz, onNewQuiz }) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [quizHistory, setQuizHistory] = useState([]);
     const [loadingHistory, setLoadingHistory] = useState(true);
+    const [unread, setUnread] = useState(0);
+    const [showNotifs, setShowNotifs] = useState(false);
+    const [notifs, setNotifs] = useState([]);
     const router = useRouter();
+    const notifRef = useRef(null);
 
     useEffect(() => {
         if (user) {
             setLoadingHistory(true);
             fetchHistory();
+            refreshUnread();
+            const id = setInterval(refreshUnread, 15000);
+            return () => clearInterval(id);
         } else {
             setQuizHistory([]);
             setLoadingHistory(false);
+            setUnread(0);
+            setNotifs([]);
         }
     }, [user]);
+
+    // click-outside for notifications dropdown
+    useEffect(() => {
+        function onDocClick(e) {
+            if (notifRef.current && !notifRef.current.contains(e.target)) {
+                setShowNotifs(false);
+            }
+        }
+        if (showNotifs) document.addEventListener('mousedown', onDocClick);
+        return () => document.removeEventListener('mousedown', onDocClick);
+    }, [showNotifs]);
 
     // Prevent body scroll when menu is open on mobile
     useEffect(() => {
@@ -32,13 +52,11 @@ export default function Navigation({ user, onRedoQuiz, onNewQuiz }) {
         return () => { document.body.style.overflow = ''; };
     }, [isMenuOpen]);
 
+    const authHeader = () => ({ 'Authorization': `Bearer ${localStorage.getItem('quizToken')}` });
+
     const fetchHistory = async () => {
         try {
-            const response = await fetch(`${baseUrl}/scores/user/history`, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('quizToken')}`
-                }
-            });
+            const response = await fetch(`${baseUrl}/scores/user/history`, { headers: authHeader() });
             const data = await response.json();
             setQuizHistory(data);
         } catch (error) {
@@ -48,13 +66,49 @@ export default function Navigation({ user, onRedoQuiz, onNewQuiz }) {
         }
     };
 
+    const refreshUnread = async () => {
+        try {
+            const res = await fetch(`${baseUrl}/notifications/unread`, { headers: authHeader() });
+            if (!res.ok) return;
+            const data = await res.json();
+            setUnread(data.unread || 0);
+        } catch (e) {
+            console.error('Unread fetch failed:', e);
+        }
+    };
+
+    const fetchNotifications = async () => {
+        try {
+            const res = await fetch(`${baseUrl}/notifications?limit=10`, { headers: authHeader() });
+            if (!res.ok) return;
+            const data = await res.json();
+            setNotifs(data);
+        } catch (e) {
+            console.error('List notifications failed:', e);
+        }
+    };
+
+    const openNotifications = async () => {
+        if (!showNotifs) {
+            await fetchNotifications();
+        }
+        setShowNotifs((s) => !s);
+    };
+
+    const markAllRead = async () => {
+        try {
+            await fetch(`${baseUrl}/notifications/read-all`, { method: 'POST', headers: authHeader() });
+            setUnread(0);
+        } catch (e) {
+            console.error('Mark all read failed:', e);
+        }
+    };
+
     const handleDelete = async (scoreId) => {
         try {
             await fetch(`${baseUrl}/scores/${scoreId}`, {
                 method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('quizToken')}`
-                }
+                headers: authHeader()
             });
             setQuizHistory(prev => prev.filter(item => item.score_id !== scoreId));
         } catch (error) {
@@ -65,11 +119,7 @@ export default function Navigation({ user, onRedoQuiz, onNewQuiz }) {
     const handleRedo = async (quizId) => {
         setIsMenuOpen(false);
         try {
-            const response = await fetch(`${baseUrl}/quizzes/${quizId}`, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('quizToken')}`
-                }
-            });
+            const response = await fetch(`${baseUrl}/quizzes/${quizId}`, { headers: authHeader() });
             const quizData = await response.json();
             onRedoQuiz?.(quizData);
         } catch (error) {
@@ -137,6 +187,56 @@ export default function Navigation({ user, onRedoQuiz, onNewQuiz }) {
 
                     {user ? (
                         <div className="flex items-center space-x-2 sm:space-x-4">
+                            {/* Notification bell */}
+                            <div className="relative" ref={notifRef}>
+                                <button
+                                    onClick={openNotifications}
+                                    className="btn-ghost p-2 rounded-lg relative"
+                                    aria-haspopup="menu"
+                                    aria-expanded={showNotifs}
+                                    aria-label="Notifications"
+                                >
+                                    <span className="sr-only">Notifications</span>
+                                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                    </svg>
+                                    {unread > 0 && (
+                                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full">{unread > 9 ? '9+' : unread}</span>
+                                    )}
+                                </button>
+                                {showNotifs && (
+                                    <div role="menu" className="absolute right-0 mt-2 w-80 max-w-[90vw] glass-card shadow-lg z-50">
+                                        <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200">
+                                            <span className="font-semibold text-gray-800">Notifications</span>
+                                            {unread > 0 && (
+                                                <button onClick={markAllRead} className="text-xs text-indigo-600 hover:underline">Mark all read</button>
+                                            )}
+                                        </div>
+                                        <ul className="max-h-96 overflow-y-auto divide-y divide-gray-100">
+                                            {notifs.length === 0 ? (
+                                                <li className="p-4 text-sm text-gray-600">No notifications</li>
+                                            ) : notifs.map((n) => (
+                                                <li key={n.id} className="p-3 text-sm">
+                                                    {n.type === 'friend_request' && (
+                                                        <div>🤝 New friend request from <strong>{n.data?.from_username || 'someone'}</strong></div>
+                                                    )}
+                                                    {n.type === 'friend_accepted' || n.type === 'friend_accept' ? (
+                                                        <div>✅ <strong>{n.data?.by_username || 'A friend'}</strong> accepted your request</div>
+                                                    ) : null}
+                                                    {n.type === 'friend_declined' || n.type === 'friend_decline' ? (
+                                                        <div>❌ <strong>{n.data?.by_username || 'A friend'}</strong> declined your request</div>
+                                                    ) : null}
+                                                    {!['friend_request','friend_accepted','friend_accept','friend_declined','friend_decline'].includes(n.type) && (
+                                                        <div>{n.type}</div>
+                                                    )}
+                                                    <div className="text-xs text-gray-500 mt-1">{new Date(n.created_at).toLocaleString()}</div>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+                            </div>
+
                             <div className="flex items-center gap-2 text-white">
                                 <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
                                     <span className="text-sm font-medium">{user?.username?.charAt(0)?.toUpperCase() || 'U'}</span>
@@ -266,3 +366,5 @@ export default function Navigation({ user, onRedoQuiz, onNewQuiz }) {
         </nav>
     );
 }
+
+export default memo(NavigationImpl);

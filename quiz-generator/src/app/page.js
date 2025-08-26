@@ -1,12 +1,11 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import QuizGenerator from '@/components/QuizGenerator';
 import QuizQuestion from '@/components/QuizQuestion';
 import QuizRecap from '@/components/QuizRecap';
 import AuthForm from '@/components/AuthForm';
-import Navigation from '@/components/Navigation';
-import Footer from '@/components/Footer';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}` : 'http://localhost:5000';
 
@@ -25,6 +24,7 @@ export default function Home({ initialQuiz = null}) {
   const [resumeState, setResumeState] = useState(null);
   const [sessionStreak, setSessionStreak] = useState(0);
   const [dailyStreak, setDailyStreak] = useState(0);
+  const router = useRouter();
 
   // Key for storing in-progress session
   const storageKey = 'inProgressQuiz';
@@ -106,12 +106,11 @@ export default function Home({ initialQuiz = null}) {
         .then(data => {
             setUser(data);
             setIsAuthenticated(true);
-            // If redirected here after login, go back to target
+            // If redirected here after login, go back to target using client navigation
             const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
             const redirectTo = params?.get('redirect');
             if (redirectTo) {
-              window.history.replaceState({}, '', '/');
-              window.location.href = redirectTo;
+              router.replace(redirectTo);
             }
         })
         .catch(error => {
@@ -125,7 +124,7 @@ export default function Home({ initialQuiz = null}) {
         setIsAuthenticated(false);
     }
     setLoading(false);
-  }, [isAuthenticated]);
+  }, [isAuthenticated, router]);
 
   // Load any in-progress state once authenticated and not currently in a quiz
   useEffect(() => {
@@ -138,7 +137,7 @@ export default function Home({ initialQuiz = null}) {
       if (!parsed || !parsed.quiz || !Array.isArray(parsed.quiz.questions)) return;
       setResumeState(parsed);
     } catch {}
-  }, [isAuthenticated]);
+  }, [isAuthenticated, quiz, showRecap]);
 
   // Persist in-progress state when answering or navigating
   useEffect(() => {
@@ -307,9 +306,8 @@ export default function Home({ initialQuiz = null}) {
   
 
   return (
-    <>
-      <Navigation user={user} onRedoQuiz={handleRedoQuiz} onNewQuiz={handleRestart}/>
-      <div className={`min-h-screen page-shell gradient-bg pt-20 pb-16 md:pb-24 safe-bottom flex flex-col items-center justify-start md:justify-center text-white p-4 ${bgClass} transition-all duration-2000`}>
+    <div className={`min-h-screen gradient-bg ${bgClass}`}>
+      <div className="main-container">
         {/* Top daily streak chip when idle */}
         {!quiz && isAuthenticated && (
           <div className="w-full max-w-md mb-4 flex justify-end">
@@ -340,17 +338,14 @@ export default function Home({ initialQuiz = null}) {
         ) : showRecap ? (
           <QuizRecap quiz={quiz} selectedAnswers={selectedAnswers} onRestart={handleRestart} />
         ) : isAuthenticated ? (
-          <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-lg text-black">
+          <>
             <QuizGenerator onGenerate={handleGenerate} />
-            <p {...error && { className: 'text-red-500' }}>{error}</p>
-          </div>
+            {error && <p className="text-red-500 mt-4 text-center">{error}</p>}
+          </>
         ) : (
-          <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-lg text-black">
-            <AuthForm onLogin={handleLogin}/>
-          </div>
+          <AuthForm onLogin={handleLogin}/>
         )}
       </div>
-      <Footer />
-    </>
+    </div>
   );
 }

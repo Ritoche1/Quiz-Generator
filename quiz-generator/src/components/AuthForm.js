@@ -36,9 +36,9 @@ export default function AuthForm({onLogin}) {
 
             if (isLogin) {
                 localStorage.setItem('quizToken', data.access_token);
-                // Trigger UI refresh without relying on Next router in tests
+                // Notify app shell and parent without full reload
                 try { onLogin?.(); } catch {}
-                if (typeof window !== 'undefined') window.location.reload();
+                try { window.dispatchEvent(new CustomEvent('auth-login')); } catch {}
             } else {
                 setIsLogin(true); // Switch to login after successful registration
             }

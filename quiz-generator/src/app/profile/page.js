@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Navigation from '@/components/Navigation';
-import Footer from '@/components/Footer';
+import { useRouter } from 'next/navigation';
 import { generateReportPDF, generateWorksheetPDF } from '@/lib/pdf';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}` : 'http://localhost:5000';
@@ -14,6 +13,7 @@ export default function ProfilePage() {
   const [busyId, setBusyId] = useState(null);
   const [page, setPage] = useState(1);
   const pageSize = 10;
+  const router = useRouter();
 
   // Server-side pagination flags
   const [serverPaging, setServerPaging] = useState(false);
@@ -23,15 +23,15 @@ export default function ProfilePage() {
     const token = localStorage.getItem('quizToken');
     if (!token) {
       const ret = encodeURIComponent('/profile');
-      window.location.href = `/?redirect=${ret}`;
+      router.push(`/?redirect=${ret}`);
       return;
     }
     fetch(`${baseUrl}/auth/me`, { headers: { 'Authorization': `Bearer ${token}` } })
       .then(r => r.ok ? r.json() : Promise.reject('auth'))
       .then(u => { setUser(u); fetchHistory(1); })
-      .catch(() => { const ret = encodeURIComponent('/profile'); window.location.href = `/?redirect=${ret}`; })
+      .catch(() => { const ret = encodeURIComponent('/profile'); router.push(`/?redirect=${ret}`); })
       .finally(() => setLoading(false));
-  }, []);
+  }, [router]);
 
   const fetchHistory = async (pageNumber = 1) => {
     try {
@@ -94,7 +94,7 @@ export default function ProfilePage() {
   const totalPages = Math.max(1, Math.ceil((serverPaging ? totalCount : history.length) / pageSize));
 
   const redoQuiz = (quizId) => {
-    window.location.href = `/?quiz=${quizId}`;
+    router.push(`/?quiz=${quizId}`);
   };
 
   const deleteAttempt = async (scoreId) => {
@@ -164,7 +164,6 @@ export default function ProfilePage() {
 
   return (
     <>
-      <Navigation user={user} />
       <div className="min-h-screen gradient-bg pt-20 pb-16 md:pb-24 safe-bottom">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           <div className="text-center mb-6 sm:mb-8">
@@ -235,7 +234,6 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
-      <Footer />
     </>
   );
 }

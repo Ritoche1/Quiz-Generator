@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { generateReportPDF, generateWorksheetPDF } from '@/lib/pdf';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL.replace(/\/$/, '')}` : 'http://localhost:5000';
@@ -397,7 +398,7 @@ export default function QuizRecap({ quiz, selectedAnswers, onRestart }) {
         </div>
         <div className="text-center mt-4">
           <p className="text-xs text-gray-600">
-            Want to try more quizzes? <a href="/browse" className="text-indigo-600 hover:text-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Browse all quizzes</a>
+            Want to try more quizzes? <Link href="/browse" className="text-indigo-600 hover:text-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Browse all quizzes</Link>
           </p>
         </div>
       </div>

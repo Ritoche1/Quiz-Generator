@@ -30,6 +30,14 @@ app.include_router(scores.router , prefix=prefix)
 app.include_router(auth.router , prefix=prefix)
 app.include_router(editor.router , prefix=prefix)
 
+# Include friends router
+from app.routers import friends
+app.include_router(friends.router, prefix=prefix)
+
+# Include notifications router
+from app.routers import notifications
+app.include_router(notifications.router, prefix=prefix)
+
 @app.get("/api/ping")
 async def ping():
     return {"ping": "pong"}

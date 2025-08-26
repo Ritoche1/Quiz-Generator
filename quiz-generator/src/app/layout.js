@@ -1,4 +1,5 @@
 import "@/styles/globals.css";
+import AppShell from "@/components/AppShell";
 
 export const metadata = {
   title: "Quiz Generator",
@@ -21,7 +22,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className="antialiased min-h-screen">
-        {children}
+        <AppShell>
+          {children}
+        </AppShell>
       </body>
     </html>
   );
