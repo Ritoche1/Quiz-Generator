@@ -15,6 +15,7 @@ router = APIRouter(prefix="/quizzes", tags=["quizzes"])
 async def create_new_quiz(quiz: QuizCreate, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
     quiz_data = quiz.dict()
     quiz_data["questions"] = [q.dict() for q in quiz.questions]
+    # quiz_data["owner_id"] = current_user.id  # Temporarily commented out
     return await create_quiz(db, quiz_data)
 
 @router.get("/", response_model=List[QuizResponse])
@@ -124,7 +125,8 @@ async def browse_public_quizzes(
     db: AsyncSession = Depends(get_db)
 ):
     """Browse public quizzes with filtering and pagination"""
-    query = select(Quiz).join(UserScore, Quiz.id == UserScore.quiz_id, isouter=True)
+    # Join with users table to get creator information
+    query = select(Quiz, User.username).join(User, Quiz.owner_id == User.id, isouter=True).join(UserScore, Quiz.id == UserScore.quiz_id, isouter=True)
     
     # Apply filters
     if search:
@@ -136,7 +138,7 @@ async def browse_public_quizzes(
     
     # Apply sorting
     if sort_by == "popular":
-        query = query.group_by(Quiz.id).order_by(func.count(UserScore.id).desc())
+        query = query.group_by(Quiz.id, User.username).order_by(func.count(UserScore.id).desc())
     elif sort_by == "difficulty":
         query = query.order_by(Quiz.difficulty.asc())
     else:  # created (default)
@@ -147,11 +149,11 @@ async def browse_public_quizzes(
     query = query.offset(offset).limit(limit)
     
     result = await db.execute(query)
-    quizzes = result.unique().scalars().all()
+    quiz_data = result.unique().all()
     
     # Enhance with statistics
     enhanced_quizzes = []
-    for quiz in quizzes:
+    for quiz, username in quiz_data:
         # Get quiz stats
         stats_query = await db.execute(
             select(
@@ -162,7 +164,9 @@ async def browse_public_quizzes(
         )
         stats = stats_query.first()
         
-        # Get creator info (mock for now)
+        # Use actual creator name or fallback to Anonymous
+        creator_name = username if username else "Anonymous"
+        
         enhanced_quizzes.append({
             "id": quiz.id,
             "title": quiz.title,
@@ -172,7 +176,7 @@ async def browse_public_quizzes(
             "questionsCount": len(quiz.questions),
             "attempts": stats.attempts or 0,
             "avgScore": int(stats.avg_score or 0),
-            "creator": "Anonymous",  # Could join with User table if we track creators
+            "creator": creator_name,
             "created": quiz.created_at,
             "tags": []  # Could be implemented as separate table
         })

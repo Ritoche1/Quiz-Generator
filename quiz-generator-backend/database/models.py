@@ -12,6 +12,7 @@ class Quiz(Base):
     language = Column(String(255))
     questions = Column(JSON)
     difficulty = Column(String(255))
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # Added owner field
     created_at = Column(
         TIMESTAMP,
         server_default=func.now(),
