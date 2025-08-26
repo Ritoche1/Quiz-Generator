@@ -2,6 +2,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}` : 'http://localhost:5000';
 
@@ -9,6 +10,7 @@ export default function Navigation({ user, onRedoQuiz, onNewQuiz }) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [quizHistory, setQuizHistory] = useState([]);
     const [loadingHistory, setLoadingHistory] = useState(true);
+    const router = useRouter();
 
     useEffect(() => {
         if (user) {
@@ -77,7 +79,7 @@ export default function Navigation({ user, onRedoQuiz, onNewQuiz }) {
 
     const handleLogout = () => {
         localStorage.removeItem('quizToken');
-        window.location.reload();
+        router.replace('/');
     };
 
     return (
@@ -86,7 +88,7 @@ export default function Navigation({ user, onRedoQuiz, onNewQuiz }) {
                 <div className="flex items-center justify-between h-16">
                     {/* Left cluster: burger always visible; other actions only if authenticated */}
                     <div className="flex items-center space-x-4">
-                        {/* <button
+                        <button
                             onClick={() => {
                                 if (!isMenuOpen && user) fetchHistory();
                                 setIsMenuOpen(!isMenuOpen);
@@ -99,21 +101,12 @@ export default function Navigation({ user, onRedoQuiz, onNewQuiz }) {
                             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                             </svg>
-                        </button> */}
+                        </button>
 
-                        <div className="flex-1 flex justify-center">
-                            <Link href="/" className="flex items-center gap-3">
-                                <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
-                                    <span className="text-white font-bold text-sm">Q</span>
-                                </div>
-                                <span className="text-white font-bold text-xl hidden sm:block">Quiz Generator</span>
-                            </Link>
-                        </div>
-                        
                         {user && (
                             <>
                                 <button
-                                    onClick={() => { if (typeof onNewQuiz === 'function') { onNewQuiz(); } else { window.location.href = '/'; } }}
+                                    onClick={() => { if (typeof onNewQuiz === 'function') { onNewQuiz(); } else { router.push('/'); } }}
                                     className="btn-secondary flex items-center gap-2 px-3 py-2"
                                 >
                                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -127,11 +120,20 @@ export default function Navigation({ user, onRedoQuiz, onNewQuiz }) {
                                     <Link href="/leaderboard" className="btn-ghost text-sm px-3 py-2">🏆 Leaderboard</Link>
                                     <Link href="/editor" className="btn-ghost text-sm px-3 py-2">📝 Editor</Link>
                                     <Link href="/profile" className="btn-ghost text-sm px-3 py-2">👤 Profile</Link>
+                                    <Link href="/friends" className="btn-ghost text-sm px-3 py-2">🤝 Friends</Link>
                                 </div>
                             </>
                         )}
                     </div>
 
+                    <div className="flex-1 flex justify-center">
+                        <Link href="/" className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+                                <span className="text-white font-bold text-sm">Q</span>
+                            </div>
+                            <span className="text-white font-bold text-xl hidden sm:block">Quiz Generator</span>
+                        </Link>
+                    </div>
 
                     {user ? (
                         <div className="flex items-center space-x-2 sm:space-x-4">
@@ -141,7 +143,7 @@ export default function Navigation({ user, onRedoQuiz, onNewQuiz }) {
                                 </div>
                                 <span className="hidden sm:block font-medium">{user?.username || 'User'}</span>
                             </div>
-
+                            
                             <button
                                 onClick={handleLogout}
                                 className="btn-ghost text-red-300 hover:text-red-200 hover:bg-red-500/20 p-2 rounded-lg"
@@ -166,7 +168,7 @@ export default function Navigation({ user, onRedoQuiz, onNewQuiz }) {
 
             {isMenuOpen && (
                 <>
-                    <div
+                    <div 
                         className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
                         onClick={() => setIsMenuOpen(false)}
                     />
@@ -177,14 +179,14 @@ export default function Navigation({ user, onRedoQuiz, onNewQuiz }) {
                                 {user ? 'Quiz History' : 'Menu'}
                             </h3>
                             <button
-                                className="btn-ghost p-2 rounded-lg text-gray-700"
-                                aria-label="Close menu"
-                                onClick={() => setIsMenuOpen(false)}
+                              className="btn-ghost p-2 rounded-lg text-gray-700"
+                              aria-label="Close menu"
+                              onClick={() => setIsMenuOpen(false)}
                             >
-                                ✕
+                              ✕
                             </button>
                         </div>
-
+                        
                         <div className="overflow-y-auto md:max-h-96 p-4 sm:p-6 flex-1">
                             {/* Authenticated: show history; else show CTA */}
                             {user ? (
@@ -255,6 +257,7 @@ export default function Navigation({ user, onRedoQuiz, onNewQuiz }) {
                                 <Link href="/leaderboard" className="block p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" onClick={() => setIsMenuOpen(false)}>🏆 Leaderboard</Link>
                                 <Link href="/editor" className="block p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" onClick={() => setIsMenuOpen(false)}>📝 Quiz Editor</Link>
                                 <Link href="/profile" className="block p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" onClick={() => setIsMenuOpen(false)}>👤 Profile</Link>
+                                <Link href="/friends" className="block p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" onClick={() => setIsMenuOpen(false)}>🤝 Friends</Link>
                             </div>
                         </div>
                     </div>
