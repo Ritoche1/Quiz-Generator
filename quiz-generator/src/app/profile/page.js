@@ -8,6 +8,7 @@ const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BA
 
 export default function ProfilePage() {
   const [user, setUser] = useState(null);
+  const [remainingGenerations, setRemainingGenerations] = useState(null);
   const [loading, setLoading] = useState(true);
   const [history, setHistory] = useState([]);
   const [busyId, setBusyId] = useState(null);
@@ -32,6 +33,18 @@ export default function ProfilePage() {
       .catch(() => { const ret = encodeURIComponent('/profile'); router.push(`/?redirect=${ret}`); })
       .finally(() => setLoading(false));
   }, [router]);
+
+  // Fetch remaining generations for display
+  const fetchRemainingGenerations = async () => {
+    try {
+      const res = await fetch(`${baseUrl}/generate/remaining`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('quizToken')}` } });
+      if (!res.ok) throw new Error('Failed');
+      const data = await res.json();
+      setRemainingGenerations(typeof data.remaining === 'number' ? data.remaining : null);
+    } catch (e) { setRemainingGenerations(null); }
+  };
+
+  useEffect(() => { if (user) fetchRemainingGenerations(); }, [user]);
 
   const fetchHistory = async (pageNumber = 1) => {
     try {
@@ -185,7 +198,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Stats Section */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
             <div className="card p-6 text-center">
               <div className="text-3xl font-extrabold text-indigo-600">{totals.count}</div>
               <div className="text-sm text-gray-600">Total Attempts</div>
@@ -197,6 +210,10 @@ export default function ProfilePage() {
             <div className="card p-6 text-center">
               <div className="text-3xl font-extrabold text-purple-600">{totals.avgPct}%</div>
               <div className="text-sm text-gray-600">Average Score</div>
+            </div>
+            <div className="card p-6 text-center">
+              <div className="text-3xl font-extrabold text-indigo-600">{remainingGenerations === null ? '—' : remainingGenerations}</div>
+              <div className="text-sm text-gray-600">Quizzes left today</div>
             </div>
           </div>
 

@@ -14,6 +14,8 @@ export default function QuizGenerator({ onGenerate }) {
   const [abortCtrl, setAbortCtrl] = useState(null);
   const [recentTopics, setRecentTopics] = useState([]);
   const [error, setError] = useState('');
+  const [remaining, setRemaining] = useState(null);
+  const [limitInfoLoading, setLimitInfoLoading] = useState(false);
 
   const suggestions = useMemo(() => (
     ['World History', 'JavaScript Basics', 'Photosynthesis', 'French Verbs', 'US Geography', 'Data Structures']
@@ -26,6 +28,20 @@ export default function QuizGenerator({ onGenerate }) {
     } catch {}
   }, []);
 
+  const fetchRemaining = async () => {
+    try {
+      setLimitInfoLoading(true);
+      const res = await fetch(`${baseUrl}/generate/remaining`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('quizToken')}` } });
+      if (!res.ok) throw new Error('Failed');
+      const data = await res.json();
+      setRemaining(data.remaining);
+    } catch (e) {
+      setRemaining(null);
+    } finally { setLimitInfoLoading(false); }
+  };
+
+  useEffect(() => { fetchRemaining(); }, []);
+
   const saveRecentTopic = (t) => {
     try {
       const next = [t, ...recentTopics.filter(x => x !== t)].slice(0, 8);
@@ -35,6 +51,10 @@ export default function QuizGenerator({ onGenerate }) {
   };
 
   const handleGenerate = async () => {
+    if (remaining === 0) {
+      setError('You have reached your daily generation limit (5). Come back tomorrow.');
+      return;
+    }
     if (!topic.trim()) {
       setError('Please enter a topic.');
       return;
@@ -58,8 +78,17 @@ export default function QuizGenerator({ onGenerate }) {
         signal: ctrl.signal,
       });
 
-      if (!response.ok) throw new Error('Generation failed');
+      if (!response.ok) {
+        if (response.status === 429) {
+          setError('Daily generation limit reached.');
+          setRemaining(0);
+          return;
+        }
+        throw new Error('Generation failed');
+      }
       const data = await response.json();
+      // update remaining count after successful generation
+      setRemaining(prev => prev === null ? null : Math.max(0, prev - 1));
       const quiz = {
         title: topic,
         language,
@@ -95,6 +124,13 @@ export default function QuizGenerator({ onGenerate }) {
 
   return (
     <div className="w-full max-w-lg glass-card p-8 rounded-2xl hover-lift" data-testid="quiz-generator" role="form" aria-labelledby="generator-heading">
+      {/* Remaining quota display */}
+      <div className="flex justify-end mb-4">
+        <div className="text-sm text-gray-600">
+          {limitInfoLoading ? 'Checking quota...' : (remaining === null ? 'Quota: —' : `Remaining: ${remaining}/5`)}
+        </div>
+      </div>
+
       <div className="text-center mb-8">
         <h2 id="generator-heading" className="text-2xl font-bold text-gray-800 mb-2">Create New Quiz</h2>
         <p className="text-gray-600">Generate an AI-powered quiz on any topic</p>
@@ -212,7 +248,7 @@ export default function QuizGenerator({ onGenerate }) {
         <div className="flex items-center gap-3">
           <button
             onClick={handleGenerate}
-            disabled={loading || !topic.trim()}
+            disabled={loading || !topic.trim() || remaining === 0}
             className={`btn-primary flex-1 ${loading ? 'opacity-75 cursor-not-allowed' : ''}`}
           >
             {loading ? (

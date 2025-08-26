@@ -87,3 +87,15 @@ class Notification(Base):
     data = Column(JSON, nullable=True)
     is_read = Column(Integer, nullable=False, default=0)  # 0=false, 1=true (sqlite & pg compatible)
     created_at = Column(TIMESTAMP, server_default=func.now(), nullable=False)
+
+
+class Generation(Base):
+    """Record each AI quiz generation request by user to enforce daily limits."""
+    __tablename__ = "generations"
+    __table_args__ = (
+        Index('ix_generations_user_id', 'user_id'),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(TIMESTAMP, server_default=func.now(), nullable=False)
