@@ -89,6 +89,7 @@ export default function Home({ initialQuiz = null}) {
         setShowFeedback(false);
         setBgClass('bg-default');
         setSessionStreak(0);
+        setScoreId(null); // Reset scoreId for a fresh attempt
       } catch (e) {
         console.error('Error loading quiz from URL param:', e);
         // If loading the quiz fails, clear the param-driven state
@@ -360,6 +361,7 @@ export default function Home({ initialQuiz = null}) {
     setBgClass('bg-default');
     setResumeState(null);
     setSessionStreak(0);
+    setScoreId(null); // Reset scoreId for a fresh attempt
     try { localStorage.removeItem(storageKey); } catch {}
 };
 
