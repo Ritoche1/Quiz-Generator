@@ -42,6 +42,18 @@ async def get_quiz_scores(
         raise HTTPException(status_code=404, detail="Score not found")
     return reponse
 
+@router.get("/latest/{quiz_id}", response_model=ScoreResponse)
+async def get_latest_attempt_for_quiz(
+    quiz_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Return the most recent attempt for a given quiz by the current user, if any."""
+    latest = await get_latest_score_for_quiz(db, quiz_id, current_user.id)
+    if not latest:
+        raise HTTPException(status_code=404, detail="Score not found")
+    return latest
+
 @router.get("/attempt/{score_id}", response_model=ScoreResponse)
 async def get_attempt(
     score_id: int,

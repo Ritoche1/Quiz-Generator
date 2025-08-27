@@ -74,7 +74,8 @@ body {
   background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-middle) 50%, var(--bg-end) 100%);
   background-size: 400% 400%;
   animation: gradientShift 8s ease infinite;
-  transition: all 0.3s ease;
+  /* Avoid layout-affecting transitions to prevent slide/jump on route changes */
+  transition: background 0.3s ease, background-position 0.3s ease;
 }
 
 @keyframes gradientShift {
@@ -328,4 +329,10 @@ body {
   .glass-card {
     @apply m-4;
   }
+}
+
+/* Disable transitions/animations during route changes to avoid slide-down effects */
+html.route-changing *, html.route-changing *::before, html.route-changing *::after {
+  transition: none !important;
+  animation: none !important;
 }

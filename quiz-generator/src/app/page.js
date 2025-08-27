@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import QuizGenerator from '@/components/QuizGenerator';
 import QuizQuestion from '@/components/QuizQuestion';
@@ -26,6 +26,7 @@ export default function Home({ initialQuiz = null}) {
   const [dailyStreak, setDailyStreak] = useState(0);
   const [scoreId, setScoreId] = useState(null);
   const router = useRouter();
+  const finalizedRef = useRef(null);
 
   // Key for storing in-progress session
   const storageKey = 'inProgressQuiz';
@@ -47,6 +48,15 @@ export default function Home({ initialQuiz = null}) {
     } catch { return { count: 0, lastDate: null }; }
   };
   const saveDailyStreak = (s) => { try { localStorage.setItem('dailyStreak', JSON.stringify(s)); } catch {} };
+
+  // Helper: compute next question index from saved answers
+  const computeNextIndex = (answers, total) => {
+    if (!total || total <= 0) return 0;
+    for (let i = 0; i < total; i++) {
+      if (!(i in answers)) return i;
+    }
+    return total - 1; // all answered -> will show recap
+  };
 
   useEffect(() => {
     const s = loadDailyStreak();
@@ -127,7 +137,39 @@ export default function Home({ initialQuiz = null}) {
     setLoading(false);
   }, [isAuthenticated, router]);
 
-  // Load any in-progress state once authenticated and not currently in a quiz
+  // Prefer server resume: when authenticated and we have a quiz, fetch latest attempt for that quiz
+  useEffect(() => {
+    const tryServerResumeForQuiz = async () => {
+      if (!isAuthenticated || !quiz?.id || showRecap || scoreId) return;
+      try {
+        const res = await fetch(`${baseUrl}/scores/latest/${quiz.id}`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('quizToken')}` }
+        });
+        if (!res.ok) return; // no server attempt
+        const attempt = await res.json();
+        const answers = attempt?.answers || {};
+        const total = quiz.questions?.length || 0;
+        const nextIdx = computeNextIndex(answers, total);
+        setSelectedAnswers(answers);
+        setScoreId(attempt.id);
+        // If everything answered, go to recap
+        if (Object.keys(answers).length >= total && total > 0) {
+          setShowRecap(true);
+        } else {
+          setCurrentQuestionIndex(nextIdx);
+          setShowFeedback(false);
+          setIsCorrect(null);
+          setBgClass('bg-default');
+        }
+      } catch (e) {
+        console.error('Server resume (latest) failed:', e);
+      }
+    };
+    tryServerResumeForQuiz();
+  }, [isAuthenticated, quiz, showRecap, scoreId]);
+
+  // Load any in-progress state once authenticated and not currently in a quiz.
+  // Prefer server over localStorage: if local storage has a scoreId, try fetching it from server and auto-resume.
   useEffect(() => {
     if (!isAuthenticated) return;
     if (quiz || showRecap) return;
@@ -136,7 +178,41 @@ export default function Home({ initialQuiz = null}) {
       if (!raw) return;
       const parsed = JSON.parse(raw);
       if (!parsed || !parsed.quiz || !Array.isArray(parsed.quiz.questions)) return;
-      setResumeState(parsed);
+
+      const token = localStorage.getItem('quizToken');
+      const tryServer = async () => {
+        if (parsed.scoreId && token) {
+          try {
+            const res = await fetch(`${baseUrl}/scores/attempt/${parsed.scoreId}`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+              const attempt = await res.json();
+              const answers = attempt?.answers || {};
+              const total = parsed.quiz.questions?.length || 0;
+              const nextIdx = computeNextIndex(answers, total);
+              setQuiz(parsed.quiz);
+              setSelectedAnswers(answers);
+              setScoreId(attempt.id);
+              if (Object.keys(answers).length >= total && total > 0) {
+                setShowRecap(true);
+              } else {
+                setCurrentQuestionIndex(nextIdx);
+                setShowFeedback(false);
+                setIsCorrect(null);
+                setBgClass('bg-default');
+              }
+              setResumeState(null); // auto-resume; no prompt
+              return;
+            }
+          } catch (e) {
+            console.error('Server resume (by scoreId) failed:', e);
+          }
+        }
+        // Fallback: keep previous behavior (show resume prompt based on localStorage)
+        setResumeState(parsed);
+      };
+      tryServer();
     } catch {}
   }, [isAuthenticated, quiz, showRecap]);
 
@@ -193,6 +269,17 @@ export default function Home({ initialQuiz = null}) {
       });
     } catch (e) { console.error('Progress save failed', e); }
   };
+
+  // If we auto-resume and land directly on recap (all answers present), finalize once on server
+  useEffect(() => {
+    if (!showRecap || !isAuthenticated || !quiz?.id || !scoreId) return;
+    if (finalizedRef.current === scoreId) return;
+    finalizedRef.current = scoreId;
+    try {
+      // Do not update daily streak here; only ensure server has final score
+      saveProgress(selectedAnswers, 0, true);
+    } catch {}
+  }, [showRecap, isAuthenticated, quiz, scoreId, selectedAnswers]);
   
   const handleAnswer = (answer) => {
     const currentQuestion = quiz.questions[currentQuestionIndex];
