@@ -12,7 +12,7 @@ async def save_generated_quiz(
     is_public: bool = False,
 ):
     quiz_data = {
-        "title": f"{topic} Quiz",
+        "title": topic,
         "description": f"Auto-generated {difficulty} quiz about {topic}",
         "language": language,
         "difficulty": difficulty,
