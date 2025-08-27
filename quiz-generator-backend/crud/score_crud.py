@@ -33,6 +33,15 @@ async def get_score_for_quiz(db: AsyncSession, quiz_id: int, user_id: int):
     )
     return result.scalars().first()
 
+async def get_latest_score_for_quiz(db: AsyncSession, quiz_id: int, user_id: int):
+    result = await db.execute(
+        select(UserScore)
+        .where(UserScore.quiz_id == quiz_id)
+        .where(UserScore.user_id == user_id)
+        .order_by(UserScore.created_at.desc())
+    )
+    return result.scalars().first()
+
 async def get_user_scores(db: AsyncSession, user_id: int):
     result = await db.execute(
         select(UserScore, Quiz.title, Quiz.language, Quiz.difficulty)

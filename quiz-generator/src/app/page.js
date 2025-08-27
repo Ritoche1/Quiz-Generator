@@ -24,6 +24,7 @@ export default function Home({ initialQuiz = null}) {
   const [resumeState, setResumeState] = useState(null);
   const [sessionStreak, setSessionStreak] = useState(0);
   const [dailyStreak, setDailyStreak] = useState(0);
+  const [scoreId, setScoreId] = useState(null);
   const router = useRouter();
 
   // Key for storing in-progress session
@@ -143,16 +144,16 @@ export default function Home({ initialQuiz = null}) {
   useEffect(() => {
     if (!quiz || showRecap) return;
     try {
-      const payload = JSON.stringify({ quiz, currentQuestionIndex, selectedAnswers });
+      const payload = JSON.stringify({ quiz, currentQuestionIndex, selectedAnswers, scoreId });
       localStorage.setItem(storageKey, payload);
     } catch {}
-  }, [quiz, currentQuestionIndex, selectedAnswers, showRecap]);
+  }, [quiz, currentQuestionIndex, selectedAnswers, showRecap, scoreId]);
 
   const handleLogin = () => {
       setIsAuthenticated(true);
   };
   
-  const handleGenerate = (quizData) => {
+  const handleGenerate = (quizData, initialScoreId) => {
     if (!quizData || !quizData.questions || quizData.questions.length === 0) {
       setError('No questions found. Please try again.');
       return;
@@ -167,6 +168,30 @@ export default function Home({ initialQuiz = null}) {
     setBgClass('bg-default');
     setResumeState(null);
     setSessionStreak(0);
+    setScoreId(initialScoreId || null);
+  };
+
+  // Progressive save helper
+  const saveProgress = async (answers, idx, final = false) => {
+    if (!isAuthenticated || !quiz?.id || !scoreId) return; // only when we have a server score record
+    try {
+      const url = `${baseUrl}/scores/${scoreId}`;
+      const body = {
+        answers: answers,
+      };
+      if (final) {
+        body.score = Object.entries(answers).reduce((acc, [k, v]) => acc + (quiz.questions[Number(k)]?.answer === v ? 1 : 0), 0);
+        body.max_score = quiz.questions.length;
+      }
+      await fetch(url, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('quizToken')}` || ''
+        },
+        body: JSON.stringify(body)
+      });
+    } catch (e) { console.error('Progress save failed', e); }
   };
   
   const handleAnswer = (answer) => {
@@ -177,10 +202,12 @@ export default function Home({ initialQuiz = null}) {
     setBgClass(isAnswerCorrect ? 'bg-correct' : 'bg-incorrect');
     setSessionStreak(prev => isAnswerCorrect ? prev + 1 : 0);
     
-    setSelectedAnswers((prev) => ({
-      ...prev,
-      [currentQuestionIndex]: answer,
-    }));
+    setSelectedAnswers((prev) => {
+      const next = { ...prev, [currentQuestionIndex]: answer };
+      // Save progress after updating
+      setTimeout(() => saveProgress(next, currentQuestionIndex), 0);
+      return next;
+    });
   };
   
   const updateDailyStreakOnFinish = () => {
@@ -199,13 +226,15 @@ export default function Home({ initialQuiz = null}) {
 
   const handleNextQuestion = () => {
     if (currentQuestionIndex < quiz.questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      setCurrentQuestionIndex((i) => i + 1);
       setIsCorrect(null);
       setShowFeedback(false);
       setBgClass('bg-default');
     } else {
       updateDailyStreakOnFinish();
       setShowRecap(true);
+      // Finalize score on server
+      saveProgress(selectedAnswers, currentQuestionIndex, true);
       try { localStorage.removeItem(storageKey); } catch {}
     }
   };
@@ -220,6 +249,7 @@ export default function Home({ initialQuiz = null}) {
     setBgClass('bg-default');
     setResumeState(null);
     setSessionStreak(0);
+    setScoreId(null);
     try { localStorage.removeItem(storageKey); } catch {}
   };
 

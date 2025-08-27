@@ -19,9 +19,7 @@ async def create_new_quiz(quiz: QuizCreate, db: AsyncSession = Depends(get_db), 
     quiz_data["questions"] = [q.dict() for q in quiz.questions]
     # Ensure owner_id is set so creator shows up in browse/profile
     quiz_data["owner_id"] = current_user.id
-    # Default to public if not provided
-    if 'is_public' not in quiz_data:
-        quiz_data['is_public'] = True
+    # Honor provided is_public or default False from schema/DB; do not force True
     return await create_quiz(db, quiz_data)
 
 @router.put("/{quiz_id}", response_model=QuizResponse)
@@ -54,10 +52,6 @@ async def get_single_quiz(quiz_id: int, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Quiz not found")
     return quiz
 
-# Add to existing imports
-from sqlalchemy import func
-
-# Add these endpoints to the router
 @router.get("/count")
 async def get_quiz_count(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(func.count(Quiz.id)))
@@ -233,3 +227,20 @@ async def browse_public_quizzes(
         })
 
     return enhanced_quizzes
+
+@router.delete("/{quiz_id}")
+async def delete_quiz_endpoint(
+    quiz_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    quiz = await get_quiz(db, quiz_id)
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+    if quiz.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this quiz")
+
+    success = await delete_quiz(db, quiz_id)
+    if not success:
+        raise HTTPException(status_code=400, detail="Failed to delete quiz")
+    return {"message": "Quiz deleted successfully"}

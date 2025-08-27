@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import GeneratingScreen from './GeneratingScreen';
+import ConfirmModal from './ConfirmModal';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}` : 'http://localhost:5000';
 
@@ -16,6 +18,7 @@ export default function QuizGenerator({ onGenerate }) {
   const [error, setError] = useState('');
   const [remaining, setRemaining] = useState(null);
   const [limitInfoLoading, setLimitInfoLoading] = useState(false);
+  const [showNoQuotaModal, setShowNoQuotaModal] = useState(false);
 
   const suggestions = useMemo(() => (
     ['World History', 'JavaScript Basics', 'Photosynthesis', 'French Verbs', 'US Geography', 'Data Structures']
@@ -52,7 +55,7 @@ export default function QuizGenerator({ onGenerate }) {
 
   const handleGenerate = async () => {
     if (remaining === 0) {
-      setError('You have reached your daily generation limit (5). Come back tomorrow.');
+      setShowNoQuotaModal(true);
       return;
     }
     if (!topic.trim()) {
@@ -80,22 +83,44 @@ export default function QuizGenerator({ onGenerate }) {
 
       if (!response.ok) {
         if (response.status === 429) {
-          setError('Daily generation limit reached.');
           setRemaining(0);
+          setShowNoQuotaModal(true);
           return;
         }
         throw new Error('Generation failed');
       }
       const data = await response.json();
-      // update remaining count after successful generation
+      // data now includes id, title, language, difficulty, questions
       setRemaining(prev => prev === null ? null : Math.max(0, prev - 1));
+
+      // Immediately create an initial score attempt (progressive saving)
+      let scoreRecord = null;
+      try {
+        const initRes = await fetch(`${baseUrl}/scores/${data.id}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('quizToken')}` || ''
+          },
+          body: JSON.stringify({
+            score: 0,
+            max_score: (data.questions || []).length || 0,
+            answers: {}
+          })
+        });
+        if (initRes.ok) {
+          scoreRecord = await initRes.json();
+        }
+      } catch (e) { console.error('Initial score create failed', e); }
+
       const quiz = {
-        title: topic,
-        language,
-        difficulty,
-        questions: data
+        id: data.id,
+        title: data.title,
+        language: data.language,
+        difficulty: data.difficulty,
+        questions: data.questions
       };
-      onGenerate(quiz);
+      onGenerate(quiz, scoreRecord?.id);
       saveRecentTopic(topic.trim());
     } catch (error) {
       if (error?.name === 'AbortError') return; // silently ignore
@@ -123,7 +148,7 @@ export default function QuizGenerator({ onGenerate }) {
   };
 
   return (
-    <div className="w-full max-w-lg glass-card p-8 rounded-2xl hover-lift" data-testid="quiz-generator" role="form" aria-labelledby="generator-heading">
+    <div className="w-full max-w-lg glass-card p-8 rounded-2xl" data-testid="quiz-generator" role="form" aria-labelledby="generator-heading">
       {/* Remaining quota display */}
       <div className="flex justify-end mb-4">
         <div className="text-sm text-gray-600">
@@ -248,7 +273,7 @@ export default function QuizGenerator({ onGenerate }) {
         <div className="flex items-center gap-3">
           <button
             onClick={handleGenerate}
-            disabled={loading || !topic.trim() || remaining === 0}
+            disabled={loading || !topic.trim()}
             className={`btn-primary flex-1 ${loading ? 'opacity-75 cursor-not-allowed' : ''}`}
           >
             {loading ? (
@@ -280,6 +305,23 @@ export default function QuizGenerator({ onGenerate }) {
           </Link>
         </div>
       </div>
+
+      {/* Full-screen generating overlay */}
+      {loading && (
+        <GeneratingScreen onCancel={handleCancel} />
+      )}
+
+      {/* No quota modal */}
+      <ConfirmModal
+        isOpen={showNoQuotaModal}
+        title="No generations remaining"
+        message="You've reached your daily quiz generation limit. Please try again tomorrow."
+        confirmText="OK"
+        cancelText=""
+        onConfirm={() => setShowNoQuotaModal(false)}
+        onCancel={() => setShowNoQuotaModal(false)}
+        variant="default"
+      />
     </div>
   );
 }

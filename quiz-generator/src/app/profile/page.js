@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { generateReportPDF, generateWorksheetPDF } from '@/lib/pdf';
 import ToggleSwitch from '@/components/ToggleSwitch';
+import ConfirmModal from '@/components/ConfirmModal';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}` : 'http://localhost:5000';
 
@@ -20,6 +21,7 @@ export default function ProfilePage() {
   // Server-side pagination flags
   const [serverPaging, setServerPaging] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem('quizToken');
@@ -221,6 +223,29 @@ export default function ProfilePage() {
     }
   };
 
+  const requestDeleteQuiz = (quiz) => setDeleteTarget(quiz);
+
+  const confirmDeleteQuiz = async () => {
+    if (!deleteTarget) return;
+    try {
+      const res = await fetch(`${baseUrl}/quizzes/${deleteTarget.id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('quizToken')}` }
+      });
+      if (res.ok) {
+        fetchMyQuizzes();
+        fetchHistory();
+      } else {
+        throw new Error('Delete failed');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Failed to delete quiz');
+    } finally {
+      setDeleteTarget(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen gradient-bg flex items-center justify-center">
@@ -353,7 +378,7 @@ export default function ProfilePage() {
                           </span>
                         </div>
                         <button onClick={() => router.push(`/editor?load=${q.id}`)} className="btn-ghost-light px-3 py-2 text-sm">Edit</button>
-                        <button onClick={async () => { if (!confirm('Delete this quiz? This cannot be undone.')) return; try { const res = await fetch(`${baseUrl}/quizzes/${q.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('quizToken')}` } }); if (res.ok) { fetchMyQuizzes(); fetchHistory(); } else throw new Error('Delete failed'); } catch(e){console.error(e); alert('Failed to delete quiz')} }} className="btn-ghost-light px-4 py-2 text-sm text-red-600 border-red-300 hover:border-red-400 hover:bg-red-50">Delete</button>
+                        <button onClick={() => requestDeleteQuiz(q)} className="btn-ghost-light px-4 py-2 text-sm text-red-600 border-red-300 hover:border-red-400 hover:bg-red-50">Delete</button>
                       </div>
                     </div>
                   </div>
@@ -363,6 +388,15 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+      <ConfirmModal
+        isOpen={!!deleteTarget}
+        title="Delete this quiz?"
+        message="This will permanently delete the quiz and its scores. This action cannot be undone."
+        confirmText="Yes, delete"
+        onConfirm={confirmDeleteQuiz}
+        onCancel={() => setDeleteTarget(null)}
+        variant="danger"
+      />
     </>
   );
 }

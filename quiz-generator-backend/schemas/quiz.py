@@ -16,7 +16,7 @@ class QuizCreate(BaseModel):
     language: str
     difficulty: str
     questions: List[QuestionSchema]
-    is_public: Optional[bool] = True
+    is_public: Optional[bool] = False
 
 class QuizUpdate(BaseModel):
     title: Optional[str] = None

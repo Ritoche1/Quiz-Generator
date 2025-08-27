@@ -11,7 +11,6 @@ export default function QuizRecap({ quiz, selectedAnswers, onRestart }) {
   const didMountRef = useRef(false);
   const [showingReport, setShowingReport] = useState(false);
   const [generateStatus, setGenerateStatus] = useState('');
-  // États pour les statistiques (déplacés à l'intérieur du composant)
   const [globalStats, setGlobalStats] = useState(null);
   const [attemptsCount, setAttemptsCount] = useState(null);
   const [statsLoading, setStatsLoading] = useState(false);
@@ -32,6 +31,7 @@ export default function QuizRecap({ quiz, selectedAnswers, onRestart }) {
 
   const getPerformanceColor = () => {
     const percentage = getScorePercentage();
+    if (percentage >= 90) return 'text-green-600';
     if (percentage >= 80) return 'text-green-600';
     if (percentage >= 60) return 'text-yellow-600';
     return 'text-red-600';
@@ -44,80 +44,6 @@ export default function QuizRecap({ quiz, selectedAnswers, onRestart }) {
     if (percentage >= 60) return '👍 Good work! Keep it up!';
     if (percentage >= 40) return '💪 Not bad! Room for improvement!';
     return '📚 Keep studying! You can do better!';
-  };
-
-  const submitQuizAttempt = async () => {
-    try {
-      const response = await fetch(`${apiBase}/quizzes/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('quizToken')}` || null,
-        },
-        body: JSON.stringify({
-          title : quiz.title,
-          description : "Quiz about " + quiz.title + " with " + quiz.questions.length + " questions in "  + quiz.difficulty + " difficulty in " + quiz.language + " language",
-          language : quiz.language,
-          questions : quiz.questions,
-          difficulty : quiz.difficulty,
-        })
-      });
-      
-      if (!response.ok) throw new Error('Failed to save attempt');
-      const data = await response.json();
-      submitUserScore(data.id);
-    } catch (error) {
-      console.error('Error submitting quiz attempt:', error);
-    }
-  };
-
-  const submitUserScore = async (quiz_id, isUpdate = false) => {
-    let method = 'POST';
-    let targetId = quiz_id; // default to quiz_id for POST endpoint
-
-    if (isUpdate) {
-      try {
-        const res = await fetch(`${apiBase}/scores/${quiz_id}`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('quizToken')}` || ''
-          }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data && data.quiz_id === quiz.id && data.id) {
-            method = 'PUT';
-            targetId = data.id; // score_id for PUT endpoint
-          }
-        }
-      } catch (e) {
-        console.error('Failed to check existing score, will create a new score', e);
-      }
-    }
-
-    try {
-      const body = JSON.stringify({
-        score: calculateScore(),
-        max_score: quiz.questions.length,
-        answers: selectedAnswers,
-      });
-
-      const url = method === 'POST'
-        ? `${apiBase}/scores/${quiz_id}`
-        : `${apiBase}/scores/${targetId}`; // score_id when updating
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('quizToken')}` || ''
-        },
-        body
-      });
-
-      if (!response.ok) throw new Error('Failed to save score');
-    } catch (error) {
-      console.error('Error submitting user score:', error);
-    }
   };
 
   const generateQuizReport = async () => {
@@ -149,21 +75,7 @@ export default function QuizRecap({ quiz, selectedAnswers, onRestart }) {
   useEffect(() => {
     if (didMountRef.current) return;
     didMountRef.current = true;
-
-    if (quiz.difficulty === "redo") {
-      submitUserScore(quiz.id, true);
-      return;
-    }
-
-    // If this quiz originated from Browse (already exists in DB), just submit score
-    if (quiz.id) {
-      submitUserScore(quiz.id, false);
-      return;
-    }
-
-    if (quiz.questions.length > 0) {
-      submitQuizAttempt();
-    }
+    // No DB writes here anymore; quiz already saved on generation and attempt updated progressively
   }, []);
 
   useEffect(() => {

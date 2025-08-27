@@ -138,7 +138,7 @@ body {
   @apply bg-white hover:bg-gray-50 text-black font-medium px-4 py-2 rounded-lg;
   @apply border-2 border-black;
   @apply backdrop-blur-sm border border-white/30;
-  @apply transition-all duration-300 hover:scale-105;
+  @apply transition-all duration-300;
 }
 
 .btn-ghost {
@@ -163,7 +163,7 @@ body {
 .card {
   @apply bg-white rounded-2xl shadow-xl;
   @apply border border-gray-100;
-  @apply transition-all duration-300 hover:shadow-2xl hover:scale-105;
+  @apply transition-all duration-300 hover:shadow-2xl;
 }
 
 .card-header {
@@ -234,6 +234,40 @@ body {
   box-shadow: 0 0 30px rgba(79, 70, 229, 0.4);
 }
 
+/* Fun generating screen animations */
+.floaty {
+  position: absolute;
+  width: 14rem;
+  height: 14rem;
+  background: radial-gradient(ellipse at center, rgba(255,255,255,0.35), rgba(255,255,255,0));
+  border-radius: 9999px;
+  animation: float 8s ease-in-out infinite;
+  filter: blur(4px);
+}
+.floaty.delay-200 { animation-delay: .2s; }
+.floaty.delay-300 { animation-delay: .3s; }
+.floaty.delay-500 { animation-delay: .5s; }
+
+@keyframes float {
+  0% { transform: translateY(0) translateX(0); opacity: .8; }
+  50% { transform: translateY(-20px) translateX(10px); opacity: 1; }
+  100% { transform: translateY(0) translateX(0); opacity: .8; }
+}
+
+.shimmer {
+  animation: shimmer 1.2s ease-in-out infinite;
+}
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
+
+.bounce-slow { animation: bounceSlow 1.6s infinite; display: inline-block; }
+@keyframes bounceSlow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
 /* Quiz Specific Styles */
 .question-card {
   @apply card p-8;
@@ -247,9 +281,8 @@ body {
   @apply flex items-center gap-3;
 }
 
-.option-button:hover {
-  transform: translateX(8px);
-}
+/* Remove translateX on hover to avoid container shift */
+/* .option-button:hover { transform: translateX(8px); } */
 
 .option-button.selected {
   @apply border-indigo-500 bg-indigo-100 text-indigo-800;
