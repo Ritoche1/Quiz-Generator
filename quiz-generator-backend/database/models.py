@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, JSON, ForeignKey, TIMESTAMP, Index, UniqueConstraint
+from sqlalchemy import Column, Integer, String, JSON, ForeignKey, TIMESTAMP, Index, UniqueConstraint, Boolean
 from database.database import Base
 from sqlalchemy.sql import func
 
@@ -13,6 +13,7 @@ class Quiz(Base):
     questions = Column(JSON)
     difficulty = Column(String(255))
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # Added owner field
+    is_public = Column(Boolean, nullable=False, server_default='1')  # New: public flag for browsing
     created_at = Column(
         TIMESTAMP,
         server_default=func.now(),

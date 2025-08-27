@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { generateReportPDF, generateWorksheetPDF } from '@/lib/pdf';
+import ToggleSwitch from '@/components/ToggleSwitch';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}` : 'http://localhost:5000';
 
@@ -84,6 +85,27 @@ export default function ProfilePage() {
   };
 
   useEffect(() => { if (user) fetchMyQuizzes(); }, [user]);
+
+  // Compute current streak based on history (consecutive days ending at latest attempt)
+  const computeStreak = (historyArr) => {
+    if (!historyArr || historyArr.length === 0) return 0;
+    // unique day strings sorted descending
+    const days = Array.from(new Set(historyArr.map(h => new Date(h.date).toISOString().slice(0,10)))).sort((a,b) => new Date(b) - new Date(a));
+    let streak = 0;
+    let expected = new Date(days[0]);
+    for (const dayStr of days) {
+      const d = new Date(dayStr);
+      if (d.toDateString() === expected.toDateString()) {
+        streak += 1;
+        expected.setDate(expected.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+    return streak;
+  };
+
+  const accountStreak = useMemo(() => computeStreak(history), [history]);
 
   const totals = useMemo(() => {
     if (serverPaging) {
@@ -177,6 +199,28 @@ export default function ProfilePage() {
     finally { setBusyId(null); }
   };
 
+  const toggleQuizVisibility = async (quiz) => {
+    setBusyId(quiz.id);
+    try {
+      const res = await fetch(`${baseUrl}/quizzes/${quiz.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('quizToken')}`
+        },
+        body: JSON.stringify({ is_public: !quiz.is_public })
+      });
+      if (!res.ok) throw new Error('Failed to update visibility');
+      const updated = await res.json();
+      setMyQuizzes(prev => prev.map(p => p.id === updated.id ? updated : p));
+    } catch (e) {
+      console.error('Toggle visibility failed', e);
+      alert('Failed to change quiz visibility');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen gradient-bg flex items-center justify-center">
@@ -197,23 +241,34 @@ export default function ProfilePage() {
             <p className="text-white/80">Your stats and quiz management</p>
           </div>
 
-          {/* Stats Section */}
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
-            <div className="card p-6 text-center">
-              <div className="text-3xl font-extrabold text-indigo-600">{totals.count}</div>
-              <div className="text-sm text-gray-600">Total Attempts</div>
+          {/* Account Info Card */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="glass-card p-6 flex items-center gap-4">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
+                {user?.username?.charAt(0).toUpperCase()}
+              </div>
+              <div className="flex-1">
+                <div className="text-lg font-semibold text-gray-800">{user?.username}</div>
+                <div className="text-sm text-gray-600">{user?.email}</div>
+                <div className="mt-2 text-sm text-gray-700">Streak: <span className="font-semibold text-indigo-600">{accountStreak} day{accountStreak !== 1 ? 's' : ''}</span></div>
+              </div>
+              <div className="text-sm text-gray-500">Member since<br/>{user?.created_at ? new Date(user.created_at).toLocaleDateString() : '—'}</div>
             </div>
-            <div className="card p-6 text-center">
-              <div className="text-3xl font-extrabold text-green-600">{totals.best}%</div>
-              <div className="text-sm text-gray-600">Best Score</div>
-            </div>
-            <div className="card p-6 text-center">
-              <div className="text-3xl font-extrabold text-purple-600">{totals.avgPct}%</div>
-              <div className="text-sm text-gray-600">Average Score</div>
-            </div>
-            <div className="card p-6 text-center">
-              <div className="text-3xl font-extrabold text-indigo-600">{remainingGenerations === null ? '—' : remainingGenerations}</div>
-              <div className="text-sm text-gray-600">Quizzes left today</div>
+
+            {/* Totals boxes remain next to account info on larger screens */}
+            <div className="md:col-span-2 grid grid-cols-3 gap-4">
+              <div className="card p-6 text-center">
+                <div className="text-3xl font-extrabold text-indigo-600">{totals.count}</div>
+                <div className="text-sm text-gray-600">Total Attempts</div>
+              </div>
+              <div className="card p-6 text-center">
+                <div className="text-3xl font-extrabold text-green-600">{totals.best}%</div>
+                <div className="text-sm text-gray-600">Best Score</div>
+              </div>
+              <div className="card p-6 text-center">
+                <div className="text-3xl font-extrabold text-purple-600">{totals.avgPct}%</div>
+                <div className="text-sm text-gray-600">Average Score</div>
+              </div>
             </div>
           </div>
 
@@ -264,22 +319,42 @@ export default function ProfilePage() {
           </div>
 
           {/* My Quizzes Section */}
-          <div className="glass-card p-4 rounded-2xl mt-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">My Quizzes</h2>
+          <div className="glass-card p-6 rounded-2xl mt-6">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">My Quizzes</h2>
             {!myQuizzes || myQuizzes.length === 0 ? (
-              <div className="text-center py-8 text-gray-600">You haven't created any quizzes yet.</div>
+              <div className="text-center py-12">
+                <p className="text-gray-600 mb-4">You haven't created any quizzes yet.</p>
+                <button onClick={() => router.push('/editor')} className="btn-primary">
+                  Create a Quiz
+                </button>
+              </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {myQuizzes.map((q) => (
-                  <div key={q.id} className="card p-4 flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-semibold text-gray-800 mb-1 truncate">{q.title}</h4>
-                      <div className="text-xs text-gray-600">{q.language} • {q.difficulty}</div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button onClick={() => router.push(`/editor?load=${q.id}`)} className="btn-ghost-light px-3 py-2 text-sm">Load</button>
-                      <button onClick={async () => { if (!confirm('Delete this quiz?')) return; try { const res = await fetch(`${baseUrl}/editor/quiz/${q.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('quizToken')}` } }); if (res.ok) { fetchMyQuizzes(); fetchHistory(); } else throw new Error('Delete failed'); } catch(e){console.error(e); alert('Failed to delete quiz')} }} className="btn-ghost-light px-3 py-2 text-sm text-red-600">Delete</button>
-                      <button onClick={async () => { try { const res = await fetch(`${baseUrl}/editor/quiz/${q.id}/duplicate`, { method: 'POST', headers: { 'Authorization': `Bearer ${localStorage.getItem('quizToken')}` } }); if (res.ok) { const dup = await res.json(); router.push(`/editor?load=${dup.id}`); } else throw new Error('Duplicate failed'); } catch(e){console.error(e); alert('Failed to duplicate') } }} className="btn-primary px-3 py-2 text-sm">Duplicate</button>
+                  <div key={q.id} className="card p-4 transition-shadow hover:shadow-md">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex-1 mb-4 sm:mb-0">
+                        <h4 className="font-semibold text-lg text-gray-800 mb-1 truncate">{q.title}</h4>
+                        <div className="text-sm text-gray-500 flex items-center flex-wrap gap-x-4 gap-y-1">
+                          <span><span className="font-medium">Language:</span> {q.language}</span>
+                          <span><span className="font-medium">Difficulty:</span> {q.difficulty}</span>
+                          <span><span className="font-medium">Questions:</span> {q.questions.length}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="flex flex-col items-center">
+                          <ToggleSwitch 
+                            isEnabled={q.is_public}
+                            onToggle={() => toggleQuizVisibility(q)}
+                            disabled={busyId === q.id}
+                          />
+                          <span className={`text-xs mt-1 font-medium ${q.is_public ? 'text-green-600' : 'text-gray-500'}`}>
+                            {q.is_public ? 'Public' : 'Private'}
+                          </span>
+                        </div>
+                        <button onClick={() => router.push(`/editor?load=${q.id}`)} className="btn-ghost-light px-3 py-2 text-sm">Edit</button>
+                        <button onClick={async () => { if (!confirm('Delete this quiz? This cannot be undone.')) return; try { const res = await fetch(`${baseUrl}/quizzes/${q.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('quizToken')}` } }); if (res.ok) { fetchMyQuizzes(); fetchHistory(); } else throw new Error('Delete failed'); } catch(e){console.error(e); alert('Failed to delete quiz')} }} className="btn-ghost-light px-4 py-2 text-sm text-red-600 border-red-300 hover:border-red-400 hover:bg-red-50">Delete</button>
+                      </div>
                     </div>
                   </div>
                 ))}

@@ -16,6 +16,7 @@ class QuizCreate(BaseModel):
     language: str
     difficulty: str
     questions: List[QuestionSchema]
+    is_public: Optional[bool] = True
 
 class QuizUpdate(BaseModel):
     title: Optional[str] = None
@@ -23,6 +24,7 @@ class QuizUpdate(BaseModel):
     language: Optional[str] = None
     difficulty: Optional[str] = None
     questions: Optional[List[QuestionSchema]] = None
+    is_public: Optional[bool] = None
 
 class QuizResponse(BaseModel):
     id: int
@@ -32,6 +34,7 @@ class QuizResponse(BaseModel):
     difficulty: str
     questions: List[Dict]
     created_at: datetime
+    is_public: bool
 
     # Pydantic v2
     model_config = ConfigDict(from_attributes=True)

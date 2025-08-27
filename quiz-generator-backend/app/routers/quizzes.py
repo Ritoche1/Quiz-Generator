@@ -7,8 +7,10 @@ from database.models import User, Quiz, UserScore
 from app.routers.auth import get_current_user
 from crud.quiz_crud import *
 from schemas.quiz import *
+import logging
 
 router = APIRouter(prefix="/quizzes", tags=["quizzes"])
+logger = logging.getLogger(__name__)
 
 @router.post("", response_model=QuizResponse, include_in_schema=False)
 @router.post("/", response_model=QuizResponse)
@@ -17,7 +19,29 @@ async def create_new_quiz(quiz: QuizCreate, db: AsyncSession = Depends(get_db), 
     quiz_data["questions"] = [q.dict() for q in quiz.questions]
     # Ensure owner_id is set so creator shows up in browse/profile
     quiz_data["owner_id"] = current_user.id
+    # Default to public if not provided
+    if 'is_public' not in quiz_data:
+        quiz_data['is_public'] = True
     return await create_quiz(db, quiz_data)
+
+@router.put("/{quiz_id}", response_model=QuizResponse)
+async def update_quiz_endpoint(
+    quiz_id: int,
+    quiz_update: QuizUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    quiz = await get_quiz(db, quiz_id)
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+    
+    if quiz.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to update this quiz")
+
+    update_data = quiz_update.model_dump(exclude_unset=True)
+    
+    updated_quiz = await update_quiz(db, quiz_id, update_data)
+    return updated_quiz
 
 @router.get("/", response_model=List[QuizResponse])
 async def fetch_all_quizzes(db: AsyncSession = Depends(get_db)):
@@ -126,60 +150,86 @@ async def browse_public_quizzes(
     db: AsyncSession = Depends(get_db)
 ):
     """Browse public quizzes with filtering and pagination"""
-    # Join with users table to get creator information
-    query = select(Quiz, User.username).join(User, Quiz.owner_id == User.id, isouter=True).join(UserScore, Quiz.id == UserScore.quiz_id, isouter=True)
-    
+    # Select explicit quiz columns and left join user to get creator username
+    query = select(
+        Quiz.id.label('quiz_id'),  # Explicitly label the quiz ID
+        Quiz.title.label('title'),
+        Quiz.description.label('description'),
+        Quiz.language.label('language'),
+        Quiz.questions.label('questions'),
+        Quiz.difficulty.label('difficulty'),
+        Quiz.owner_id.label('owner_id'),
+        Quiz.is_public.label('is_public'),
+        Quiz.created_at.label('created_at'),
+        User.username.label('username')
+    ).join(User, Quiz.owner_id == User.id, isouter=True)
+
+    # Only public quizzes
+    query = query.where(Quiz.is_public == True)
+
     # Apply filters
     if search:
-        query = query.where(Quiz.title.ilike(f"%{search}%"))
+        il = f"%{search}%"
+        query = query.where(
+            (Quiz.title.ilike(il)) |
+            (Quiz.description.ilike(il))
+        )
     if difficulty and difficulty != "all":
         query = query.where(Quiz.difficulty == difficulty)
     if language and language != "all":
         query = query.where(Quiz.language == language)
-    
+
     # Apply sorting
     if sort_by == "popular":
-        query = query.group_by(Quiz.id, User.username).order_by(func.count(UserScore.id).desc())
+        # Use a subquery to compute attempt counts per quiz and order by that
+        attempts_subq = (
+            select(UserScore.quiz_id.label('quiz_id'), func.count(UserScore.id).label('attempts'))
+            .group_by(UserScore.quiz_id)
+        ).subquery()
+        query = query.outerjoin(attempts_subq, Quiz.id == attempts_subq.c.quiz_id).order_by(attempts_subq.c.attempts.desc().nullslast())
     elif sort_by == "difficulty":
         query = query.order_by(Quiz.difficulty.asc())
     else:  # created (default)
         query = query.order_by(Quiz.created_at.desc())
-    
+
     # Apply pagination
     offset = (page - 1) * limit
     query = query.offset(offset).limit(limit)
-    
+
     result = await db.execute(query)
-    quiz_data = result.unique().all()
-    
+    # Use mappings() so we get dict-like rows and can access columns consistently
+    quiz_rows = result.mappings().all()
+
     # Enhance with statistics
     enhanced_quizzes = []
-    for quiz, username in quiz_data:
-        # Get quiz stats
+    for row in quiz_rows:
+        quiz_id = row.get("quiz_id")  # Use the correct label
+        creator_name = row.get("username") or "Anonymous"
+        questions = row.get("questions") or []
+
         stats_query = await db.execute(
             select(
-                func.count(UserScore.id).label('attempts'),
-                func.avg(UserScore.score / UserScore.max_score * 100).label('avg_score')
-            )
-            .where(UserScore.quiz_id == quiz.id)
+                func.count(UserScore.id).label("attempts"),
+                func.avg(UserScore.score / UserScore.max_score * 100).label("avg_score"),
+            ).where(UserScore.quiz_id == quiz_id)
         )
-        stats = stats_query.first()
-        
-        # Use actual creator name or fallback to Anonymous
-        creator_name = username if username else "Anonymous"
-        
+        stats = stats_query.mappings().first() or {}
+        attempts = int(stats.get("attempts") or 0)
+        avg_score = int(stats.get("avg_score") or 0)
+
         enhanced_quizzes.append({
-            "id": quiz.id,
-            "title": quiz.title,
-            "description": quiz.description,
-            "difficulty": quiz.difficulty,
-            "language": quiz.language,
-            "questionsCount": len(quiz.questions),
-            "attempts": stats.attempts or 0,
-            "avgScore": int(stats.avg_score or 0),
+            "id": quiz_id,
+            "title": row.get("title"),
+            "description": row.get("description"),
+            "difficulty": row.get("difficulty"),
+            "language": row.get("language"),
+            "questionsCount": len(questions),
+            "attempts": attempts,
+            "avgScore": avg_score,
             "creator": creator_name,
-            "created": quiz.created_at,
-            "tags": []  # Could be implemented as separate table
+            "created": row.get("created_at"),
+            "tags": [],
+            "is_public": bool(row.get("is_public"))
         })
-    
+
     return enhanced_quizzes

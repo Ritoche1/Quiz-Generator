@@ -185,10 +185,10 @@ export default function Leaderboard() {
                   <button
                     key={difficulty}
                     onClick={() => setSelectedDifficulty(difficulty)}
-                    className={`px-6 py-3 rounded-lg font-medium transition-all duration-300 flex items-center gap-2 ${
+                    className={`px-6 py-3 rounded-lg font-medium flex items-center gap-2 ${
                       selectedDifficulty === difficulty
                         ? 'bg-white text-gray-800 shadow-lg'
-                        : 'text-white hover:bg-white/10'
+                        : 'text-white'
                     }`}
                   >
                     <span>{getDifficultyIcon(difficulty)}</span>
@@ -231,7 +231,7 @@ export default function Leaderboard() {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {leaderboardData[selectedDifficulty].map((player, index) => (
-                    <tr key={index} className="hover:bg-gray-50 transition-colors">
+                    <tr key={index}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <span className="text-2xl mr-2">{getRankIcon(index + 1)}</span>
