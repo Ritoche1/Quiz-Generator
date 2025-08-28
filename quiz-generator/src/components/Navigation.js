@@ -165,6 +165,7 @@ function NavigationImpl({ user, onRedoQuiz, onNewQuiz }) {
                                     <Link href="/editor" className="btn-ghost text-sm px-3 py-2">📝 Editor</Link>
                                     <Link href="/profile" className="btn-ghost text-sm px-3 py-2">👤 Profile</Link>
                                     <Link href="/friends" className="btn-ghost text-sm px-3 py-2">🤝 Friends</Link>
+                                    <Link href="/settings" className="btn-ghost text-sm px-3 py-2">⚙️ Settings</Link>
                                 </div>
                             </>
                         )}
@@ -343,6 +344,7 @@ function NavigationImpl({ user, onRedoQuiz, onNewQuiz }) {
                                 <Link href="/editor" className="block p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" onClick={() => setIsMenuOpen(false)}>📝 Quiz Editor</Link>
                                 <Link href="/profile" className="block p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" onClick={() => setIsMenuOpen(false)}>👤 Profile</Link>
                                 <Link href="/friends" className="block p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" onClick={() => setIsMenuOpen(false)}>🤝 Friends</Link>
+                                <Link href="/settings" className="block p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" onClick={() => setIsMenuOpen(false)}>⚙️ Settings</Link>
                             </div>
                         </div>
                     </div>

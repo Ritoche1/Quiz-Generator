@@ -21,7 +21,7 @@ export default function GeneratingScreen({ onCancel }) {
   }, []);
 
 return (
-    <div className="fixed inset-0 z-50 gradient-bg flex flex-col items-center justify-center text-gray-800 text-center px-6">
+    <div className="fixed inset-0 z-50 gradient-bg flex flex-col items-center justify-center text-white text-center px-6">
         {/* Floating bubbles */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
             <span className="floaty left-[10%] top-[15%]" />
@@ -30,19 +30,19 @@ return (
             <span className="floaty left-[60%] top-[80%] delay-500" />
         </div>
 
-        <div className="glass-card max-w-xl w-full p-10 rounded-2xl shadow-2xl relative">
+        <div className="flex flex-col items-center justify-center relative">
             <div className="text-6xl sm:text-7xl mb-4 bounce-slow" aria-hidden>
                 {emojis[emojiIndex]}
             </div>
-            <h2 className="text-2xl sm:text-3xl font-bold mb-2">Generating your quiz</h2>
-            <p className="text-black/90 mb-6">{messages[messageIndex]}</p>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-2 text-white drop-shadow-lg">Generating your quiz</h2>
+            <p className="text-white/90 mb-6 drop-shadow-lg">{messages[messageIndex]}</p>
 
             {/* Progress shimmer */}
-            <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div className="h-full w-1/3 bg-blue-500 shimmer" />
+            <div className="w-64 h-2 bg-white/20 rounded-full overflow-hidden mb-6 backdrop-blur-sm">
+                <div className="h-full w-1/3 bg-white shimmer" />
             </div>
 
-            <button onClick={onCancel} className="btn-secondary">Cancel</button>
+            <button onClick={onCancel} className="btn-secondary backdrop-blur-sm bg-white/10 border-white/30 text-white hover:bg-white/20 shadow-lg">Cancel</button>
         </div>
     </div>
 );

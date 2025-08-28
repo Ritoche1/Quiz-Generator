@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from typing import Optional
 from database.database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
-from crud.user_crud import get_user_by_email, create_user
+from crud.user_crud import get_user_by_email, get_user_by_username, create_user
 from database.models import User
 import os
 
@@ -80,6 +80,12 @@ async def register(user: UserCreate, db: AsyncSession = Depends(get_db)):
     existing_user = await get_user_by_email(db, user.email)
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # check if username already exists
+    existing_username = await get_user_by_username(db, user.username)
+    if existing_username:
+        raise HTTPException(status_code=400, detail="Username already exists")
+    
     hashed_password = get_password_hash(user.password)
     
     # create user in database

@@ -32,7 +32,13 @@ export default function AuthForm({onLogin}) {
             });
 
             const data = await response.json();
-            if (!response.ok) throw new Error(data.error || 'Something went wrong');
+            if (!response.ok) {
+                // Handle different error types more specifically
+                if (data.detail) {
+                    throw new Error(data.detail);
+                }
+                throw new Error(data.error || 'Something went wrong');
+            }
 
             if (isLogin) {
                 localStorage.setItem('quizToken', data.access_token);
