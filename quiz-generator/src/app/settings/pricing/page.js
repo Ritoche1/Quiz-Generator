@@ -62,10 +62,10 @@ export default function PricingPage() {
       <div className="main-container">
         <div className="w-full max-w-6xl mx-auto">
           {/* Header */}
-          <div className="mb-8">
+          <div className="mb-8 pt-8">
             <button 
               onClick={() => router.back()}
-              className="mb-4 btn-ghost-light px-4 py-2 text-sm flex items-center gap-2"
+              className="mb-6 btn-ghost-light px-4 py-2 text-sm flex items-center gap-2"
             >
               <span>←</span> Back to Settings
             </button>

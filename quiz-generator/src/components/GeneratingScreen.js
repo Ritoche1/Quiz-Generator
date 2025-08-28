@@ -37,9 +37,9 @@ return (
             <h2 className="text-2xl sm:text-3xl font-bold mb-2 text-white drop-shadow-lg">Generating your quiz</h2>
             <p className="text-white/90 mb-6 drop-shadow-lg">{messages[messageIndex]}</p>
 
-            {/* Progress shimmer */}
-            <div className="w-64 h-2 bg-white/20 rounded-full overflow-hidden mb-6 backdrop-blur-sm">
-                <div className="h-full w-1/3 bg-white shimmer" />
+            {/* Progress shimmer - more visible */}
+            <div className="w-64 h-3 bg-white/30 rounded-full overflow-hidden mb-6 backdrop-blur-sm shadow-lg">
+                <div className="h-full w-1/3 bg-white shadow-md shimmer" />
             </div>
 
             <button onClick={onCancel} className="btn-secondary backdrop-blur-sm bg-white/10 border-white/30 text-white hover:bg-white/20 shadow-lg">Cancel</button>

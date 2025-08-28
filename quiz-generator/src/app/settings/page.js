@@ -50,12 +50,6 @@ export default function SettingsPage() {
         <div className="w-full max-w-4xl mx-auto">
           {/* Header */}
           <div className="mb-8">
-            <button 
-              onClick={() => router.back()}
-              className="mb-4 btn-ghost-light px-4 py-2 text-sm flex items-center gap-2"
-            >
-              <span>←</span> Back
-            </button>
             <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">Settings</h1>
             <p className="text-white/80">Manage your account and preferences</p>
           </div>

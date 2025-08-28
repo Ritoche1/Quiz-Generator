@@ -147,6 +147,11 @@ export default function QuizGenerator({ onGenerate }) {
     }
   };
 
+  // Show only the generating screen when loading
+  if (loading) {
+    return <GeneratingScreen onCancel={handleCancel} />;
+  }
+
   return (
     <div className="w-full max-w-lg glass-card p-8 rounded-2xl" data-testid="quiz-generator" role="form" aria-labelledby="generator-heading">
       {/* Remaining quota display */}
@@ -269,30 +274,18 @@ export default function QuizGenerator({ onGenerate }) {
           </select>
         </div>
 
-        {/* Generate / Cancel Buttons */}
-        <div className="flex items-center gap-3">
+        {/* Generate Button */}
+        <div>
           <button
             onClick={handleGenerate}
             disabled={loading || !topic.trim()}
-            className={`btn-primary flex-1 ${loading ? 'opacity-75 cursor-not-allowed' : ''}`}
+            className="btn-primary w-full"
           >
-            {loading ? (
-              <div className="flex items-center justify-center gap-3">
-                <div className="loading-spinner" aria-hidden="true"></div>
-                <span>Generating Quiz...</span>
-              </div>
-            ) : (
-              <div className="flex items-center justify-center gap-2">
-                <span aria-hidden="true">✨</span>
-                <span>Generate Quiz</span>
-              </div>
-            )}
+            <div className="flex items-center justify-center gap-2">
+              <span aria-hidden="true">✨</span>
+              <span>Generate Quiz</span>
+            </div>
           </button>
-          {loading && (
-            <button type="button" onClick={handleCancel} className="btn-ghost px-4 py-2">
-              Cancel
-            </button>
-          )}
         </div>
       </div>
 
@@ -305,11 +298,6 @@ export default function QuizGenerator({ onGenerate }) {
           </Link>
         </div>
       </div>
-
-      {/* Full-screen generating overlay */}
-      {loading && (
-        <GeneratingScreen onCancel={handleCancel} />
-      )}
 
       {/* No quota modal */}
       <ConfirmModal

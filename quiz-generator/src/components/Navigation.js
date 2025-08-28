@@ -129,7 +129,7 @@ function NavigationImpl({ user, onRedoQuiz, onNewQuiz }) {
 
     const handleLogout = () => {
         localStorage.removeItem('quizToken');
-        router.replace('/');
+        window.location.href = '/'; // Force page refresh to show login screen immediately
     };
 
     return (
