@@ -8,6 +8,7 @@ const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BA
 
 function NavigationImpl({ user, onRedoQuiz, onNewQuiz }) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [quizHistory, setQuizHistory] = useState([]);
     const [loadingHistory, setLoadingHistory] = useState(true);
     const [unread, setUnread] = useState(0);
@@ -15,6 +16,7 @@ function NavigationImpl({ user, onRedoQuiz, onNewQuiz }) {
     const [notifs, setNotifs] = useState([]);
     const router = useRouter();
     const notifRef = useRef(null);
+    const userMenuRef = useRef(null);
 
     useEffect(() => {
         if (user) {
@@ -37,10 +39,13 @@ function NavigationImpl({ user, onRedoQuiz, onNewQuiz }) {
             if (notifRef.current && !notifRef.current.contains(e.target)) {
                 setShowNotifs(false);
             }
+            if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+                setIsUserMenuOpen(false);
+            }
         }
-        if (showNotifs) document.addEventListener('mousedown', onDocClick);
+        if (showNotifs || isUserMenuOpen) document.addEventListener('mousedown', onDocClick);
         return () => document.removeEventListener('mousedown', onDocClick);
-    }, [showNotifs]);
+    }, [showNotifs, isUserMenuOpen]);
 
     // Prevent body scroll when menu is open on mobile
     useEffect(() => {
@@ -129,14 +134,16 @@ function NavigationImpl({ user, onRedoQuiz, onNewQuiz }) {
 
     const handleLogout = () => {
         localStorage.removeItem('quizToken');
+        setIsUserMenuOpen(false);
         window.location.href = '/'; // Force page refresh to show login screen immediately
     };
 
     return (
         <nav className="w-full nav-glass fixed top-0 z-50 pt-[env(safe-area-inset-top)]">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between h-16">
-                    <div className="flex-1 flex justify-center">
+                <div className="flex items-center justify-between h-14">
+                    {/* Logo */}
+                    <div className="flex items-center">
                         <Link href="/" className="flex items-center gap-3">
                             <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
                                 <span className="text-white font-bold text-sm">Q</span>
@@ -144,14 +151,29 @@ function NavigationImpl({ user, onRedoQuiz, onNewQuiz }) {
                             <span className="text-white font-bold text-xl hidden sm:block">Quiz Generator</span>
                         </Link>
                     </div>
-                    
-                    <div className="flex items-center space-x-4">
 
-                        {user && (
+                    {/* Center Navigation - Public Links */}
+                    {!user && (
+                        <div className="hidden md:flex items-center space-x-1">
+                            <Link href="/browse" className="btn-ghost text-sm px-3 py-2">🎯 Browse</Link>
+                            <Link href="/leaderboard" className="btn-ghost text-sm px-3 py-2">🏆 Leaderboard</Link>
+                        </div>
+                    )}
+
+                    {/* Right Side Actions */}
+                    <div className="flex items-center space-x-2 sm:space-x-4">
+                        {user ? (
                             <>
+                                {/* New Quiz Button */}
                                 <button
-                                    onClick={() => { if (typeof onNewQuiz === 'function') { onNewQuiz(); } else { router.push('/'); } }}
-                                    className="btn-secondary flex items-center gap-2 px-3 py-2"
+                                    onClick={() => { 
+                                        if (typeof onNewQuiz === 'function') { 
+                                            onNewQuiz(); 
+                                        } else { 
+                                            router.push('/generator'); 
+                                        } 
+                                    }}
+                                    className="btn-secondary flex items-center gap-2 px-3 py-1.5 text-sm"
                                 >
                                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -159,106 +181,138 @@ function NavigationImpl({ user, onRedoQuiz, onNewQuiz }) {
                                     <span className="hidden xs:inline">New Quiz</span>
                                 </button>
 
-                                <div className="hidden md:flex items-center space-x-1">
-                                    <Link href="/browse" className="btn-ghost text-sm px-3 py-2">🎯 Browse</Link>
-                                    <Link href="/leaderboard" className="btn-ghost text-sm px-3 py-2">🏆 Leaderboard</Link>
-                                    <Link href="/editor" className="btn-ghost text-sm px-3 py-2">📝 Editor</Link>
-                                    <Link href="/profile" className="btn-ghost text-sm px-3 py-2">👤 Profile</Link>
-                                    <Link href="/friends" className="btn-ghost text-sm px-3 py-2">🤝 Friends</Link>
-                                    <Link href="/settings" className="btn-ghost text-sm px-3 py-2">⚙️ Settings</Link>
+                                {/* History Button (Mobile) */}
+                                <button
+                                    onClick={() => setIsMenuOpen(true)}
+                                    className="btn-ghost p-2 rounded-lg md:hidden"
+                                    aria-label="Open history"
+                                >
+                                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </button>
+
+                                {/* Notification Bell */}
+                                <div className="relative" ref={notifRef}>
+                                    <button
+                                        onClick={openNotifications}
+                                        className="btn-ghost p-2 rounded-lg relative"
+                                        aria-haspopup="menu"
+                                        aria-expanded={showNotifs}
+                                        aria-label="Notifications"
+                                    >
+                                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                        </svg>
+                                        {unread > 0 && (
+                                            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full">{unread > 9 ? '9+' : unread}</span>
+                                        )}
+                                    </button>
+                                    {showNotifs && (
+                                        <div role="menu" className="absolute right-0 mt-2 w-80 max-w-[90vw] glass-card shadow-lg z-50">
+                                            <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200">
+                                                <span className="font-semibold text-gray-800">Notifications</span>
+                                                {unread > 0 && (
+                                                    <button onClick={markAllRead} className="text-xs text-indigo-600 hover:underline">Mark all read</button>
+                                                )}
+                                            </div>
+                                            <ul className="max-h-96 overflow-y-auto divide-y divide-gray-100">
+                                                {notifs.length === 0 ? (
+                                                    <li className="p-4 text-sm text-gray-600">No notifications</li>
+                                                ) : notifs.map((n) => (
+                                                    <li key={n.id} className="p-3 text-sm">
+                                                        {n.type === 'friend_request' && (
+                                                            <div>🤝 New friend request from <strong>{n.data?.from_username || 'someone'}</strong></div>
+                                                        )}
+                                                        {n.type === 'friend_accepted' || n.type === 'friend_accept' ? (
+                                                            <div>✅ <strong>{n.data?.by_username || 'A friend'}</strong> accepted your request</div>
+                                                        ) : null}
+                                                        {n.type === 'friend_declined' || n.type === 'friend_decline' ? (
+                                                            <div>❌ <strong>{n.data?.by_username || 'A friend'}</strong> declined your request</div>
+                                                        ) : null}
+                                                        {!['friend_request','friend_accepted','friend_accept','friend_declined','friend_decline'].includes(n.type) && (
+                                                            <div>{n.type}</div>
+                                                        )}
+                                                        <div className="text-xs text-gray-500 mt-1">{new Date(n.created_at).toLocaleString()}</div>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* User Menu */}
+                                <div className="relative" ref={userMenuRef}>
+                                    <button
+                                        onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                                        className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                                        aria-haspopup="menu"
+                                        aria-expanded={isUserMenuOpen}
+                                    >
+                                        <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                                            <span className="text-sm font-medium text-white">{user?.username?.charAt(0)?.toUpperCase() || 'U'}</span>
+                                        </div>
+                                        <span className="hidden sm:block font-medium text-white text-sm">{user?.username || 'User'}</span>
+                                        <svg className={`h-4 w-4 text-white transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </button>
+
+                                    {isUserMenuOpen && (
+                                        <div className="absolute right-0 mt-2 w-48 glass-card shadow-lg z-50 py-1">
+                                            <Link 
+                                                href="/profile" 
+                                                className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                                                onClick={() => setIsUserMenuOpen(false)}
+                                            >
+                                                <span>👤</span>
+                                                Profile
+                                            </Link>
+                                            <Link 
+                                                href="/friends" 
+                                                className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                                                onClick={() => setIsUserMenuOpen(false)}
+                                            >
+                                                <span>🤝</span>
+                                                Friends
+                                            </Link>
+                                            <Link 
+                                                href="/settings" 
+                                                className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                                                onClick={() => setIsUserMenuOpen(false)}
+                                            >
+                                                <span>⚙️</span>
+                                                Settings
+                                            </Link>
+                                            <hr className="my-1 border-gray-200" />
+                                            <button
+                                                onClick={handleLogout}
+                                                className="flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors w-full text-left"
+                                            >
+                                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                                </svg>
+                                                Logout
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             </>
+                        ) : (
+                            <Link href="/" className="btn-secondary">Login</Link>
                         )}
                     </div>
-
-                    {user ? (
-                        <div className="flex items-center space-x-2 sm:space-x-4">
-                            {/* Notification bell */}
-                            <div className="relative" ref={notifRef}>
-                                <button
-                                    onClick={openNotifications}
-                                    className="btn-ghost p-2 rounded-lg relative"
-                                    aria-haspopup="menu"
-                                    aria-expanded={showNotifs}
-                                    aria-label="Notifications"
-                                >
-                                    <span className="sr-only">Notifications</span>
-                                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                                    </svg>
-                                    {unread > 0 && (
-                                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full">{unread > 9 ? '9+' : unread}</span>
-                                    )}
-                                </button>
-                                {showNotifs && (
-                                    <div role="menu" className="absolute right-0 mt-2 w-80 max-w-[90vw] glass-card shadow-lg z-50">
-                                        <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200">
-                                            <span className="font-semibold text-gray-800">Notifications</span>
-                                            {unread > 0 && (
-                                                <button onClick={markAllRead} className="text-xs text-indigo-600 hover:underline">Mark all read</button>
-                                            )}
-                                        </div>
-                                        <ul className="max-h-96 overflow-y-auto divide-y divide-gray-100">
-                                            {notifs.length === 0 ? (
-                                                <li className="p-4 text-sm text-gray-600">No notifications</li>
-                                            ) : notifs.map((n) => (
-                                                <li key={n.id} className="p-3 text-sm">
-                                                    {n.type === 'friend_request' && (
-                                                        <div>🤝 New friend request from <strong>{n.data?.from_username || 'someone'}</strong></div>
-                                                    )}
-                                                    {n.type === 'friend_accepted' || n.type === 'friend_accept' ? (
-                                                        <div>✅ <strong>{n.data?.by_username || 'A friend'}</strong> accepted your request</div>
-                                                    ) : null}
-                                                    {n.type === 'friend_declined' || n.type === 'friend_decline' ? (
-                                                        <div>❌ <strong>{n.data?.by_username || 'A friend'}</strong> declined your request</div>
-                                                    ) : null}
-                                                    {!['friend_request','friend_accepted','friend_accept','friend_declined','friend_decline'].includes(n.type) && (
-                                                        <div>{n.type}</div>
-                                                    )}
-                                                    <div className="text-xs text-gray-500 mt-1">{new Date(n.created_at).toLocaleString()}</div>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="flex items-center gap-2 text-white">
-                                <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                                    <span className="text-sm font-medium">{user?.username?.charAt(0)?.toUpperCase() || 'U'}</span>
-                                </div>
-                                <span className="hidden sm:block font-medium">{user?.username || 'User'}</span>
-                            </div>
-                            
-                            <button
-                                onClick={handleLogout}
-                                className="btn-ghost text-red-300 hover:text-red-200 hover:bg-red-500/20 p-2 rounded-lg"
-                                aria-label="Log out"
-                            >
-                                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                </svg>
-                            </button>
-                        </div>
-                    ) : (
-                        <div className="flex-1 flex justify-end space-x-2 sm:space-x-4">
-                            <div className="hidden md:flex items-center space-x-1 mr-2 sm:mr-4">
-                                <Link href="/browse" className="btn-ghost text-sm px-3 py-2">🎯 Browse Quizzes</Link>
-                                <Link href="/leaderboard" className="btn-ghost text-sm px-3 py-2">🏆 Leaderboard</Link>
-                            </div>
-                            <Link href="/" className="btn-secondary">Login</Link>
-                        </div>
-                    )}
                 </div>
             </div>
 
+            {/* Mobile History Drawer */}
             {isMenuOpen && (
                 <>
                     <div 
                         className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
                         onClick={() => setIsMenuOpen(false)}
                     />
-                    <div id="history-drawer" className="fixed md:absolute left-0 top-0 md:top-16 h-full md:h-auto w-full md:w-80 glass-card md:m-4 overflow-hidden z-50 flex flex-col">
+                    <div id="history-drawer" className="fixed left-0 top-0 h-full w-full md:w-80 glass-card overflow-hidden z-50 flex flex-col">
                         <div className="p-4 sm:p-6 border-b border-gray-200 flex items-center justify-between">
                             <h3 className="text-lg sm:text-xl font-bold text-gray-800 flex items-center gap-2">
                                 <span>{user ? '📊' : '📂'}</span>
@@ -273,7 +327,7 @@ function NavigationImpl({ user, onRedoQuiz, onNewQuiz }) {
                             </button>
                         </div>
                         
-                        <div className="overflow-y-auto md:max-h-96 p-4 sm:p-6 flex-1">
+                        <div className="overflow-y-auto max-h-96 p-4 sm:p-6 flex-1">
                             {/* Authenticated: show history; else show CTA */}
                             {user ? (
                                 loadingHistory ? (
@@ -336,15 +390,19 @@ function NavigationImpl({ user, onRedoQuiz, onNewQuiz }) {
                             )}
                         </div>
 
-                        <div className="p-4 sm:p-6 border-t border-gray-200 md:hidden">
+                        <div className="p-4 sm:p-6 border-t border-gray-200">
                             <h4 className="font-medium text-gray-800 mb-3">Quick Links</h4>
                             <div className="space-y-2">
                                 <Link href="/browse" className="block p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" onClick={() => setIsMenuOpen(false)}>🎯 Browse Quizzes</Link>
                                 <Link href="/leaderboard" className="block p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" onClick={() => setIsMenuOpen(false)}>🏆 Leaderboard</Link>
-                                <Link href="/editor" className="block p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" onClick={() => setIsMenuOpen(false)}>📝 Quiz Editor</Link>
-                                <Link href="/profile" className="block p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" onClick={() => setIsMenuOpen(false)}>👤 Profile</Link>
-                                <Link href="/friends" className="block p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" onClick={() => setIsMenuOpen(false)}>🤝 Friends</Link>
-                                <Link href="/settings" className="block p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" onClick={() => setIsMenuOpen(false)}>⚙️ Settings</Link>
+                                {user && (
+                                    <>
+                                        <Link href="/editor" className="block p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" onClick={() => setIsMenuOpen(false)}>📝 Quiz Editor</Link>
+                                        <Link href="/profile" className="block p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" onClick={() => setIsMenuOpen(false)}>👤 Profile</Link>
+                                        <Link href="/friends" className="block p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" onClick={() => setIsMenuOpen(false)}>🤝 Friends</Link>
+                                        <Link href="/settings" className="block p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" onClick={() => setIsMenuOpen(false)}>⚙️ Settings</Link>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>
