@@ -67,7 +67,7 @@ export default function PricingPage() {
               onClick={() => router.back()}
               className="mb-6 btn-ghost-light px-4 py-2 text-sm flex items-center gap-2"
             >
-              <span>←</span> Back to Settings
+              <span>←</span> Back
             </button>
             <div className="text-center">
               <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">Choose Your Plan</h1>
