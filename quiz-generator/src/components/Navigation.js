@@ -164,6 +164,7 @@ function NavigationImpl({ user, onRedoQuiz, onNewQuiz }) {
                     <div className="hidden md:flex items-center space-x-1">
                         <Link href="/browse" className="btn-ghost text-sm px-3 py-2">🎯 Browse</Link>
                         <Link href="/leaderboard" className="btn-ghost text-sm px-3 py-2">🏆 Leaderboard</Link>
+                        {user && <Link href="/editor" className="btn-ghost text-sm px-3 py-2">📝 Quiz Editor</Link>}
                     </div>
 
                     {/* Right Side Actions */}
