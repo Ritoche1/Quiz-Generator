@@ -62,10 +62,46 @@ export default function GeneratorPage({ initialQuiz = null}) {
     setDailyStreak(s?.count || 0);
   }, []);
 
-  // Fetch a quiz by id from URL param (e.g., /generator?quiz=123)
+  // Fetch a quiz by id from URL param (e.g., /generator?quiz=123) OR handle redo
   useEffect(() => {
     const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
     const quizId = params?.get('quiz');
+    const isRedo = params?.get('redo') === 'true';
+    
+    if (isRedo) {
+      // Handle redo functionality
+      const redoData = sessionStorage.getItem('redoQuizData');
+      if (redoData) {
+        try {
+          const quizData = JSON.parse(redoData);
+          sessionStorage.removeItem('redoQuizData'); // Clean up
+          
+          // Set up quiz for redo
+          setQuiz({
+            id: quizData.id,
+            title: quizData.title,
+            language: quizData.language,
+            difficulty: quizData.difficulty,
+            questions: quizData.questions || [],
+          });
+          setCurrentQuestionIndex(0);
+          setSelectedAnswers({});
+          setShowRecap(false);
+          setIsCorrect(null);
+          setShowFeedback(false);
+          setBgClass('bg-default');
+          setSessionStreak(0);
+          setScoreId(null); // Reset scoreId for a fresh attempt
+          
+          // Clear URL params for clean state
+          window.history.replaceState({}, '', '/generator');
+        } catch (e) {
+          console.error('Error parsing redo quiz data:', e);
+        }
+      }
+      return;
+    }
+    
     if (!quizId) return;
 
     const fetchQuizById = async (id) => {

@@ -125,10 +125,18 @@ function NavigationImpl({ user, onRedoQuiz, onNewQuiz }) {
         setIsMenuOpen(false);
         try {
             const response = await fetch(`${baseUrl}/quizzes/${quizId}`, { headers: authHeader() });
+            if (!response.ok) {
+                throw new Error('Failed to fetch quiz data');
+            }
             const quizData = await response.json();
-            onRedoQuiz?.(quizData);
+            
+            // Store the quiz data temporarily and redirect to generator
+            sessionStorage.setItem('redoQuizData', JSON.stringify(quizData));
+            router.push('/generator?redo=true');
         } catch (error) {
             console.error('Redo failed:', error);
+            // Show user-friendly error message
+            alert('Failed to load quiz for redo. Please try again.');
         }
     };
 
@@ -141,7 +149,7 @@ function NavigationImpl({ user, onRedoQuiz, onNewQuiz }) {
     return (
         <nav className="w-full nav-glass fixed top-0 z-50 pt-[env(safe-area-inset-top)]">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between h-14">
+                <div className="flex items-center justify-between h-16">
                     {/* Logo */}
                     <div className="flex items-center">
                         <Link href="/" className="flex items-center gap-3">
@@ -152,13 +160,11 @@ function NavigationImpl({ user, onRedoQuiz, onNewQuiz }) {
                         </Link>
                     </div>
 
-                    {/* Center Navigation - Public Links */}
-                    {!user && (
-                        <div className="hidden md:flex items-center space-x-1">
-                            <Link href="/browse" className="btn-ghost text-sm px-3 py-2">🎯 Browse</Link>
-                            <Link href="/leaderboard" className="btn-ghost text-sm px-3 py-2">🏆 Leaderboard</Link>
-                        </div>
-                    )}
+                    {/* Center Navigation - For all users */}
+                    <div className="hidden md:flex items-center space-x-1">
+                        <Link href="/browse" className="btn-ghost text-sm px-3 py-2">🎯 Browse</Link>
+                        <Link href="/leaderboard" className="btn-ghost text-sm px-3 py-2">🏆 Leaderboard</Link>
+                    </div>
 
                     {/* Right Side Actions */}
                     <div className="flex items-center space-x-2 sm:space-x-4">
@@ -209,34 +215,62 @@ function NavigationImpl({ user, onRedoQuiz, onNewQuiz }) {
                                         )}
                                     </button>
                                     {showNotifs && (
-                                        <div role="menu" className="absolute right-0 mt-2 w-80 max-w-[90vw] glass-card shadow-lg z-50">
-                                            <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200">
-                                                <span className="font-semibold text-gray-800">Notifications</span>
+                                        <div role="menu" className="absolute right-0 mt-2 w-80 max-w-[90vw] notification-panel shadow-xl z-50">
+                                            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 backdrop-blur-sm">
+                                                <span className="font-semibold text-gray-800 flex items-center gap-2">
+                                                    <span className="text-lg">🔔</span>
+                                                    Notifications
+                                                </span>
                                                 {unread > 0 && (
-                                                    <button onClick={markAllRead} className="text-xs text-indigo-600 hover:underline">Mark all read</button>
+                                                    <button onClick={markAllRead} className="text-xs text-indigo-600 hover:text-indigo-800 font-medium px-2 py-1 rounded-md hover:bg-indigo-50 transition-colors">Mark all read</button>
                                                 )}
                                             </div>
-                                            <ul className="max-h-96 overflow-y-auto divide-y divide-gray-100">
+                                            <div className="max-h-96 overflow-y-auto">
                                                 {notifs.length === 0 ? (
-                                                    <li className="p-4 text-sm text-gray-600">No notifications</li>
-                                                ) : notifs.map((n) => (
-                                                    <li key={n.id} className="p-3 text-sm">
-                                                        {n.type === 'friend_request' && (
-                                                            <div>🤝 New friend request from <strong>{n.data?.from_username || 'someone'}</strong></div>
-                                                        )}
-                                                        {n.type === 'friend_accepted' || n.type === 'friend_accept' ? (
-                                                            <div>✅ <strong>{n.data?.by_username || 'A friend'}</strong> accepted your request</div>
-                                                        ) : null}
-                                                        {n.type === 'friend_declined' || n.type === 'friend_decline' ? (
-                                                            <div>❌ <strong>{n.data?.by_username || 'A friend'}</strong> declined your request</div>
-                                                        ) : null}
-                                                        {!['friend_request','friend_accepted','friend_accept','friend_declined','friend_decline'].includes(n.type) && (
-                                                            <div>{n.type}</div>
-                                                        )}
-                                                        <div className="text-xs text-gray-500 mt-1">{new Date(n.created_at).toLocaleString()}</div>
-                                                    </li>
-                                                ))}
-                                            </ul>
+                                                    <div className="p-6 text-center">
+                                                        <div className="text-4xl mb-2">🔕</div>
+                                                        <p className="text-sm text-gray-600">No notifications yet</p>
+                                                        <p className="text-xs text-gray-500 mt-1">We'll notify you about important updates</p>
+                                                    </div>
+                                                ) : (
+                                                    <div className="divide-y divide-gray-100/50">
+                                                        {notifs.map((n) => (
+                                                            <div key={n.id} className="p-4 hover:bg-gray-50/50 transition-colors">
+                                                                <div className="flex items-start gap-3">
+                                                                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm">
+                                                                        {n.type === 'friend_request' && '🤝'}
+                                                                        {(n.type === 'friend_accepted' || n.type === 'friend_accept') && '✅'}
+                                                                        {(n.type === 'friend_declined' || n.type === 'friend_decline') && '❌'}
+                                                                        {!['friend_request','friend_accepted','friend_accept','friend_declined','friend_decline'].includes(n.type) && '📢'}
+                                                                    </div>
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <div className="text-sm text-gray-800">
+                                                                            {n.type === 'friend_request' && (
+                                                                                <span>New friend request from <strong className="font-semibold text-indigo-600">{n.data?.from_username || 'someone'}</strong></span>
+                                                                            )}
+                                                                            {(n.type === 'friend_accepted' || n.type === 'friend_accept') && (
+                                                                                <span><strong className="font-semibold text-green-600">{n.data?.by_username || 'A friend'}</strong> accepted your friend request</span>
+                                                                            )}
+                                                                            {(n.type === 'friend_declined' || n.type === 'friend_decline') && (
+                                                                                <span><strong className="font-semibold text-red-600">{n.data?.by_username || 'A friend'}</strong> declined your friend request</span>
+                                                                            )}
+                                                                            {!['friend_request','friend_accepted','friend_accept','friend_declined','friend_decline'].includes(n.type) && (
+                                                                                <span>{n.type.replace(/_/g, ' ')}</span>
+                                                                            )}
+                                                                        </div>
+                                                                        <div className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                                                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                            </svg>
+                                                                            {new Date(n.created_at).toLocaleString()}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     )}
                                 </div>
