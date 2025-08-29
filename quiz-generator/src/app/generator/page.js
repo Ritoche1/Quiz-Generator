@@ -76,6 +76,9 @@ export default function GeneratorPage({ initialQuiz = null}) {
           const quizData = JSON.parse(redoData);
           sessionStorage.removeItem('redoQuizData'); // Clean up
           
+          // Clear any existing in-progress quiz data for a fresh start
+          try { localStorage.removeItem(storageKey); } catch {}
+          
           // Set up quiz for redo
           setQuiz({
             id: quizData.id,
@@ -92,6 +95,7 @@ export default function GeneratorPage({ initialQuiz = null}) {
           setBgClass('bg-default');
           setSessionStreak(0);
           setScoreId(null); // Reset scoreId for a fresh attempt
+          setResumeState(null); // Clear any resume prompts
           
           // Clear URL params for clean state
           window.history.replaceState({}, '', '/generator');

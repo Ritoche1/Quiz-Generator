@@ -105,7 +105,7 @@ export default function HomePage() {
           // Authenticated Home - Dashboard View
           <div className="w-full max-w-4xl mx-auto">
             {/* Welcome Section */}
-            <div className="text-center mb-12">
+            <div className="text-center mb-12 page-header">
               <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">
                 Welcome back, {user?.username}! 👋
               </h1>
@@ -205,7 +205,7 @@ export default function HomePage() {
           // Guest Home - Landing Page
           <div className="w-full max-w-4xl mx-auto text-center">
             {/* Hero Section */}
-            <div className="mb-16">
+            <div className="mb-16 page-header">
               <div className="text-6xl mb-6">🧠</div>
               <h1 className="text-5xl sm:text-6xl font-bold text-white mb-6">
                 Quiz Generator

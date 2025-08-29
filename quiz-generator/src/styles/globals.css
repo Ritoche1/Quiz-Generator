@@ -43,16 +43,16 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: calc(100vh - 4rem); /* Account for fixed navigation (h-16 = 4rem) */
+  min-height: calc(100vh - 5rem); /* Account for fixed navigation (h-16 + safe area = ~5rem) */
   padding: 2rem 1rem;
-  padding-top: calc(4rem + 2rem); /* Navigation height + spacing */
+  padding-top: calc(5rem + 2rem); /* Navigation height + safe area + spacing */
   padding-bottom: 2rem;
 }
 
 /* On medium screens and up, account for fixed footer */
 @media (min-width: 768px) {
   .main-container {
-    min-height: calc(100vh - 4rem - 5rem); /* Navigation + Footer + safe area */
+    min-height: calc(100vh - 5rem - 5rem); /* Navigation + Footer + safe areas */
     padding-bottom: calc(5rem + 2rem); /* Footer height + spacing */
   }
 }
@@ -244,6 +244,13 @@ body {
   background-repeat: no-repeat;
   background-size: 1.5em 1.5em;
   padding-right: 2.5rem;
+}
+
+/* Page Header Security */
+.page-header {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  margin-top: 1rem;
 }
 
 /* Enhanced Navigation */

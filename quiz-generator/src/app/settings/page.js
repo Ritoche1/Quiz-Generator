@@ -253,7 +253,7 @@ export default function SettingsPage() {
       <div className="main-container">
         <div className="w-full max-w-4xl mx-auto">
           {/* Header */}
-          <div className="mb-8">
+          <div className="mb-8 page-header">
             <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">Settings</h1>
             <p className="text-white/80">Manage your account and preferences</p>
           </div>
