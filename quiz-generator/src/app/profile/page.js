@@ -143,8 +143,26 @@ export default function ProfilePage() {
 
   const totalPages = Math.max(1, Math.ceil((serverPaging ? totalCount : history.length) / pageSize));
 
-  const redoQuiz = (quizId) => {
-    router.push(`/?quiz=${quizId}`);
+  const redoQuiz = async (quizId) => {
+    setBusyId(quizId);
+    try {
+      const response = await fetch(`${baseUrl}/quizzes/${quizId}`, { 
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('quizToken')}` }
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch quiz data');
+      }
+      const quizData = await response.json();
+      
+      // Store the quiz data temporarily and redirect to generator
+      sessionStorage.setItem('redoQuizData', JSON.stringify(quizData));
+      router.push('/generator?redo=true');
+    } catch (error) {
+      console.error('Redo failed:', error);
+      alert('Failed to load quiz for redo. Please try again.');
+    } finally {
+      setBusyId(null);
+    }
   };
 
   const deleteAttempt = async (scoreId) => {

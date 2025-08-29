@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from typing import Optional
 from database.database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
-from crud.user_crud import get_user_by_email, create_user
+from crud.user_crud import get_user_by_email, get_user_by_username, create_user
 from database.models import User
 import os
 
@@ -37,6 +37,16 @@ class UserResponse(BaseModel):
     id: int
     email: str
     username: str
+
+class UsernameUpdate(BaseModel):
+    username: str
+
+class EmailUpdate(BaseModel):
+    email: str
+
+class PasswordUpdate(BaseModel):
+    current_password: str
+    new_password: str
 
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
@@ -80,6 +90,12 @@ async def register(user: UserCreate, db: AsyncSession = Depends(get_db)):
     existing_user = await get_user_by_email(db, user.email)
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # check if username already exists
+    existing_username = await get_user_by_username(db, user.username)
+    if existing_username:
+        raise HTTPException(status_code=400, detail="Username already exists")
+    
     hashed_password = get_password_hash(user.password)
     
     # create user in database
@@ -120,3 +136,91 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
 @router.get("/me", response_model=UserResponse)
 async def read_users_me(current_user: User = Depends(get_current_user)):
     return current_user
+
+@router.put("/update-username", response_model=UserResponse)
+async def update_username(
+    username_data: UsernameUpdate, 
+    current_user: User = Depends(get_current_user), 
+    db: AsyncSession = Depends(get_db)
+):
+    # Check if username is already taken by another user
+    existing_user = await get_user_by_username(db, username_data.username)
+    if existing_user and existing_user.id != current_user.id:
+        raise HTTPException(status_code=400, detail="Username already exists")
+    
+    # Update username
+    current_user.username = username_data.username
+    await db.commit()
+    await db.refresh(current_user)
+    
+    return current_user
+
+@router.put("/update-email", response_model=UserResponse)
+async def update_email(
+    email_data: EmailUpdate, 
+    current_user: User = Depends(get_current_user), 
+    db: AsyncSession = Depends(get_db)
+):
+    # Check if email is already taken by another user
+    existing_user = await get_user_by_email(db, email_data.email)
+    if existing_user and existing_user.id != current_user.id:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # Update email
+    current_user.email = email_data.email
+    await db.commit()
+    await db.refresh(current_user)
+    
+    return current_user
+
+@router.put("/update-password")
+async def update_password(
+    password_data: PasswordUpdate, 
+    current_user: User = Depends(get_current_user), 
+    db: AsyncSession = Depends(get_db)
+):
+    # Verify current password
+    if not verify_password(password_data.current_password, current_user.hashed_password):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+    
+    # Update password
+    current_user.hashed_password = get_password_hash(password_data.new_password)
+    await db.commit()
+    
+    return {"message": "Password updated successfully"}
+
+@router.get("/export-data")
+async def export_user_data(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    # Get user's quiz history and scores
+    from crud.score_crud import get_user_scores
+    scores = await get_user_scores(db, current_user.id)
+    
+    # Prepare export data
+    export_data = {
+        "user": {
+            "id": current_user.id,
+            "username": current_user.username,
+            "email": current_user.email,
+            "export_date": datetime.utcnow().isoformat()
+        },
+        "quiz_history": [
+            {
+                "score_id": score.id,
+                "quiz_id": score.quiz_id,
+                "title": score.title,
+                "score": score.score,
+                "max_score": score.max_score,
+                "difficulty": score.difficulty,
+                "language": score.language,
+                "date": score.date.isoformat() if score.date else None
+            } for score in scores
+        ],
+        "statistics": {
+            "total_quizzes": len(scores),
+            "average_score": sum(s.score for s in scores) / len(scores) if scores else 0,
+            "total_possible_score": sum(s.max_score for s in scores),
+            "best_score": max(s.score for s in scores) if scores else 0
+        }
+    }
+    
+    return export_data

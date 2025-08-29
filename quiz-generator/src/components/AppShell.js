@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import Navigation from './Navigation';
 import Footer from './Footer';
+import AudioManager from './AudioManager';
 import { usePathname } from 'next/navigation';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}` : 'http://localhost:5000';
@@ -50,6 +51,7 @@ export default function AppShell({ children }) {
   return (
     <>
       <Navigation user={user} />
+      <AudioManager />
       {children}
       <Footer />
     </>
