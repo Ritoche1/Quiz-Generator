@@ -1,5 +1,6 @@
 import "@/styles/globals.css";
 import AppShell from "@/components/AppShell";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 export const metadata = {
   title: "Quiz Generator",
@@ -21,10 +22,12 @@ export const viewport = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className="antialiased min-h-screen">
-        <AppShell>
-          {children}
-        </AppShell>
+      <body className="antialiased min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
+        <ThemeProvider>
+          <AppShell>
+            {children}
+          </AppShell>
+        </ThemeProvider>
       </body>
     </html>
   );

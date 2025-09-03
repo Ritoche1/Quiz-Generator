@@ -29,6 +29,20 @@
   --gray-600: #4b5563;
   --gray-800: #1f2937;
   --gray-900: #111827;
+  
+  /* Theme-aware variables */
+  --background: #ffffff;
+  --foreground: #111827;
+}
+
+.dark {
+  /* Dark theme overrides */
+  --bg-start: #312e81;
+  --bg-middle: #581c87;
+  --bg-end: #7c2d12;
+  
+  --background: #111827;
+  --foreground: #f9fafb;
 }
 
 /* Base Styles */
@@ -126,13 +140,19 @@ body {
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
 }
 
+.dark .glass-card {
+  background: rgba(31, 41, 55, 0.95);
+  border: 1px solid rgba(75, 85, 99, 0.3);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
 /* Enhanced Button Styles */
 .btn-primary {
   @apply bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700;
   @apply text-white font-semibold px-6 py-3 rounded-xl;
   @apply shadow-lg hover:shadow-xl transform hover:-translate-y-1;
   @apply transition-all duration-300 ease-out;
-  @apply border-0 focus:ring-4 focus:ring-indigo-300;
+  @apply border-0 focus:ring-4 focus:ring-indigo-300 dark:focus:ring-indigo-500;
 }
 
 .btn-secondary {
@@ -140,12 +160,14 @@ body {
   @apply border-2 border-black;
   @apply backdrop-blur-sm border border-white/30;
   @apply transition-all duration-300;
+  @apply dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700;
 }
 
 .btn-ghost {
   @apply bg-transparent hover:bg-white/10 text-white;
   @apply border border-white/20 hover:border-white/40;
   @apply px-4 py-2 rounded-lg transition-all duration-300;
+  @apply dark:text-gray-300 dark:border-gray-600/30 dark:hover:border-gray-500/50 dark:hover:bg-gray-800/50;
 }
 
 /* New: light variant for ghost buttons on white backgrounds */
@@ -153,6 +175,7 @@ body {
   @apply bg-transparent text-gray-700;
   @apply border border-gray-300 hover:border-gray-400 hover:bg-gray-50;
   @apply px-4 py-2 rounded-lg transition-all duration-300;
+  @apply dark:text-gray-300 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-800;
 }
 
 /* Larger touch targets on mobile */
@@ -165,10 +188,12 @@ body {
   @apply bg-white rounded-2xl shadow-xl;
   @apply border border-gray-100;
   @apply transition-all duration-300 hover:shadow-2xl;
+  @apply dark:bg-gray-800 dark:border-gray-700 dark:shadow-gray-900/50;
 }
 
 .card-header {
   @apply p-6 border-b border-gray-100;
+  @apply dark:border-gray-700;
 }
 
 .card-content {
@@ -181,10 +206,13 @@ body {
   @apply focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500;
   @apply transition-all duration-300 bg-white/90;
   @apply text-gray-800 placeholder-gray-500;
+  @apply dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:placeholder-gray-400;
+  @apply dark:focus:ring-indigo-500/20 dark:focus:border-indigo-400;
 }
 
 .form-select {
   @apply form-input appearance-none bg-white;
+  @apply dark:bg-gray-800;
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
   background-position: right 0.75rem center;
   background-repeat: no-repeat;
@@ -196,6 +224,7 @@ body {
 .nav-glass {
   @apply bg-white/10 backdrop-blur-xl border-b border-white/20;
   @apply shadow-lg shadow-black/5;
+  @apply dark:bg-gray-900/80 dark:border-gray-600/30;
 }
 
 /* Loading Animations */

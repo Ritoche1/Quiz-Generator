@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, memo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import ThemeToggle from './ThemeToggle';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}` : 'http://localhost:5000';
 
@@ -168,6 +169,9 @@ function NavigationImpl({ user, onRedoQuiz, onNewQuiz }) {
                                 </div>
                             </>
                         )}
+
+                        {/* Theme Toggle */}
+                        <ThemeToggle />
                     </div>
 
                     {user ? (
