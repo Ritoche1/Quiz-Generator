@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, memo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import ThemeToggle from './ThemeToggle';
+import CartIcon from './CartIcon';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}` : 'http://localhost:5000';
 
@@ -170,6 +171,9 @@ function NavigationImpl({ user, onRedoQuiz, onNewQuiz }) {
                             </>
                         )}
 
+                        {/* Cart Icon */}
+                        <CartIcon />
+                        
                         {/* Theme Toggle */}
                         <ThemeToggle />
                     </div>
