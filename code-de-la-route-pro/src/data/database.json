@@ -1,0 +1,514 @@
+{
+  "questions": [
+    {
+      "id": "1",
+      "category": "official_code",
+      "theme": "circulation_routiere",
+      "question": "À quelle distance minimale devez-vous vous arrêter derrière un véhicule à un feu rouge ?",
+      "options": ["1 mètre", "2 mètres", "3 mètres", "5 mètres"],
+      "correctAnswers": ["3 mètres"],
+      "explanation": "Il faut maintenir une distance de sécurité d'au moins 3 mètres pour permettre une visibilité optimale et éviter les collisions.",
+      "difficulty": "easy"
+    },
+    {
+      "id": "2",
+      "category": "official_code",
+      "theme": "circulation_routiere",
+      "question": "Sur autoroute, quelle est la vitesse maximale autorisée par temps de pluie ?",
+      "options": ["110 km/h", "130 km/h", "90 km/h", "100 km/h"],
+      "correctAnswers": ["110 km/h"],
+      "explanation": "Par temps de pluie sur autoroute, la vitesse est limitée à 110 km/h au lieu de 130 km/h.",
+      "difficulty": "easy"
+    },
+    {
+      "id": "3",
+      "category": "official_code",
+      "theme": "circulation_routiere",
+      "question": "Que signifie ce panneau triangulaire rouge et blanc ?",
+      "options": ["Interdiction", "Danger", "Obligation", "Information"],
+      "correctAnswers": ["Danger"],
+      "explanation": "Les panneaux triangulaires à fond blanc et bordure rouge signalent un danger.",
+      "difficulty": "easy"
+    },
+    {
+      "id": "4",
+      "category": "official_code",
+      "theme": "circulation_routiere",
+      "question": "Dans un rond-point, qui a la priorité ?",
+      "options": ["Celui qui arrive de droite", "Celui qui est déjà dans le rond-point", "Celui qui vient de gauche", "Le plus gros véhicule"],
+      "correctAnswers": ["Celui qui est déjà dans le rond-point"],
+      "explanation": "Dans un rond-point, la priorité appartient aux véhicules qui circulent déjà dans l'anneau.",
+      "difficulty": "easy"
+    },
+    {
+      "id": "5",
+      "category": "official_code",
+      "theme": "circulation_routiere",
+      "question": "Quand peut-on dépasser par la droite ?",
+      "options": ["Jamais", "Sur autoroute uniquement", "Quand la voie de droite avance plus vite", "Dans les embouteillages"],
+      "correctAnswers": ["Quand la voie de droite avance plus vite", "Dans les embouteillages"],
+      "explanation": "Le dépassement par la droite est autorisé quand la circulation est dense et que la voie de droite avance plus rapidement.",
+      "difficulty": "medium"
+    },
+    {
+      "id": "6",
+      "category": "official_code",
+      "theme": "circulation_routiere",
+      "question": "À quelle distance d'un passage piéton ne peut-on pas s'arrêter ?",
+      "options": ["3 mètres", "5 mètres", "10 mètres", "15 mètres"],
+      "correctAnswers": ["5 mètres"],
+      "explanation": "Il est interdit de s'arrêter ou de stationner à moins de 5 mètres en amont d'un passage piéton.",
+      "difficulty": "medium"
+    },
+    {
+      "id": "7",
+      "category": "official_code",
+      "theme": "circulation_routiere",
+      "question": "Sur une route à double sens, peut-on dépasser si la ligne est discontinue des deux côtés ?",
+      "options": ["Oui", "Non", "Seulement de jour", "Seulement si la visibilité est bonne"],
+      "correctAnswers": ["Oui"],
+      "explanation": "Quand la ligne de séparation est discontinue, le dépassement est autorisé si les conditions de sécurité sont réunies.",
+      "difficulty": "medium"
+    },
+    {
+      "id": "8",
+      "category": "official_code",
+      "theme": "circulation_routiere",
+      "question": "Quelle est la vitesse maximale en agglomération ?",
+      "options": ["30 km/h", "40 km/h", "50 km/h", "60 km/h"],
+      "correctAnswers": ["50 km/h"],
+      "explanation": "En agglomération, la vitesse est limitée à 50 km/h sauf indication contraire.",
+      "difficulty": "easy"
+    },
+
+    {
+      "id": "9",
+      "category": "official_code",
+      "theme": "conducteur",
+      "question": "À partir de quel taux d'alcoolémie est-on en infraction ?",
+      "options": ["0,2 g/L", "0,5 g/L", "0,8 g/L", "1,0 g/L"],
+      "correctAnswers": ["0,5 g/L"],
+      "explanation": "Le taux d'alcoolémie maximum autorisé est de 0,5 g/L de sang (0,25 mg/L d'air expiré).",
+      "difficulty": "easy"
+    },
+    {
+      "id": "10",
+      "category": "official_code",
+      "theme": "conducteur",
+      "question": "Combien de points peut-on perdre maximum en une seule infraction ?",
+      "options": ["3 points", "6 points", "8 points", "12 points"],
+      "correctAnswers": ["8 points"],
+      "explanation": "On peut perdre jusqu'à 8 points pour certaines infractions graves comme l'alcool au volant.",
+      "difficulty": "medium"
+    },
+    {
+      "id": "11",
+      "category": "official_code",
+      "theme": "conducteur",
+      "question": "Quel est l'âge minimum pour conduire une voiture ?",
+      "options": ["16 ans", "17 ans", "18 ans", "21 ans"],
+      "correctAnswers": ["18 ans"],
+      "explanation": "L'âge minimum pour conduire une voiture en France est de 18 ans (ou 17 ans en conduite accompagnée).",
+      "difficulty": "easy"
+    },
+    {
+      "id": "12",
+      "category": "official_code",
+      "theme": "conducteur",
+      "question": "Combien de temps dure la période probatoire ?",
+      "options": ["1 an", "2 ans", "3 ans", "4 ans"],
+      "correctAnswers": ["3 ans"],
+      "explanation": "La période probatoire dure 3 ans pour les conducteurs ayant passé l'examen traditionnel.",
+      "difficulty": "medium"
+    },
+    {
+      "id": "13",
+      "category": "official_code",
+      "theme": "conducteur",
+      "question": "Que risque un conducteur novice qui dépasse la vitesse de plus de 50 km/h ?",
+      "options": ["Retrait de permis", "Amende seulement", "Stage obligatoire", "Prison"],
+      "correctAnswers": ["Retrait de permis"],
+      "explanation": "Un excès de vitesse de plus de 50 km/h entraîne un retrait immédiat du permis, particulièrement grave pour un conducteur novice.",
+      "difficulty": "hard"
+    },
+    {
+      "id": "14",
+      "category": "official_code",
+      "theme": "conducteur",
+      "question": "Combien de points a un conducteur novice au début ?",
+      "options": ["6 points", "8 points", "10 points", "12 points"],
+      "correctAnswers": ["6 points"],
+      "explanation": "Un conducteur novice commence avec 6 points et peut en gagner 2 par an pendant 3 ans s'il ne commet pas d'infraction.",
+      "difficulty": "medium"
+    },
+
+    {
+      "id": "15",
+      "category": "official_code",
+      "theme": "route",
+      "question": "Que signifie une ligne blanche continue ?",
+      "options": ["Interdiction de dépasser", "Obligation de tourner", "Voie réservée", "Zone de stationnement"],
+      "correctAnswers": ["Interdiction de dépasser"],
+      "explanation": "Une ligne blanche continue interdit le dépassement et le franchissement.",
+      "difficulty": "easy"
+    },
+    {
+      "id": "16",
+      "category": "official_code",
+      "theme": "route",
+      "question": "À quoi servent les bandes rugueuses sur le bord de la chaussée ?",
+      "options": ["Réduire le bruit", "Alerter en cas de sortie de voie", "Améliorer l'adhérence", "Guider les malvoyants"],
+      "correctAnswers": ["Alerter en cas de sortie de voie"],
+      "explanation": "Les bandes rugueuses alertent le conducteur par le bruit et les vibrations qu'il sort de sa voie.",
+      "difficulty": "medium"
+    },
+    {
+      "id": "17",
+      "category": "official_code",
+      "theme": "route",
+      "question": "Que signifie un marquage au sol en zigzag ?",
+      "options": ["Zone de dépassement", "Passage piéton proche", "Virage dangereux", "Zone de stationnement"],
+      "correctAnswers": ["Passage piéton proche"],
+      "explanation": "Les lignes en zigzag signalent la proximité d'un passage piéton et interdisent le stationnement.",
+      "difficulty": "medium"
+    },
+    {
+      "id": "18",
+      "category": "official_code",
+      "theme": "route",
+      "question": "Sur une voie d'insertion d'autoroute, que doit-on faire ?",
+      "options": ["S'arrêter et attendre", "Accélérer pour s'insérer", "Céder le passage", "Klaxonner"],
+      "correctAnswers": ["Accélérer pour s'insérer"],
+      "explanation": "Sur une voie d'insertion, il faut adapter sa vitesse à celle du trafic et s'insérer en sécurité.",
+      "difficulty": "medium"
+    },
+    {
+      "id": "19",
+      "category": "official_code",
+      "theme": "route",
+      "question": "Quelle est la distance d'arrêt à 90 km/h sur route sèche ?",
+      "options": ["45 mètres", "70 mètres", "90 mètres", "110 mètres"],
+      "correctAnswers": ["90 mètres"],
+      "explanation": "La distance d'arrêt comprend la distance de réaction plus la distance de freinage. À 90 km/h, elle est d'environ 90 mètres.",
+      "difficulty": "hard"
+    },
+
+    {
+      "id": "20",
+      "category": "official_code",
+      "theme": "autres_usagers",
+      "question": "Face à un piéton qui traverse, que devez-vous faire ?",
+      "options": ["Klaxonner", "Accélérer pour passer", "Ralentir ou s'arrêter", "Faire des appels de phares"],
+      "correctAnswers": ["Ralentir ou s'arrêter"],
+      "explanation": "Il faut toujours céder le passage aux piétons qui traversent, même hors des passages protégés.",
+      "difficulty": "easy"
+    },
+    {
+      "id": "21",
+      "category": "official_code",
+      "theme": "autres_usagers",
+      "question": "Comment dépasser un cycliste en sécurité ?",
+      "options": ["Le serrer au maximum", "Laisser 1 mètre en ville", "Laisser 1,5 mètre hors agglomération", "Les deux dernières réponses"],
+      "correctAnswers": ["Les deux dernières réponses"],
+      "explanation": "Il faut laisser au minimum 1 mètre en ville et 1,5 mètre hors agglomération lors du dépassement d'un cycliste.",
+      "difficulty": "medium"
+    },
+    {
+      "id": "22",
+      "category": "official_code",
+      "theme": "autres_usagers",
+      "question": "Un motard peut-il circuler entre les files de voitures ?",
+      "options": ["Oui, toujours", "Non, jamais", "Oui, dans certaines conditions", "Seulement sur autoroute"],
+      "correctAnswers": ["Oui, dans certaines conditions"],
+      "explanation": "La circulation inter-files est autorisée à titre expérimental dans certains départements et sous certaines conditions.",
+      "difficulty": "hard"
+    },
+    {
+      "id": "23",
+      "category": "official_code",
+      "theme": "autres_usagers",
+      "question": "Que doit porter un cycliste la nuit hors agglomération ?",
+      "options": ["Casque", "Gilet rétro-réfléchissant", "Gants", "Chaussures de sécurité"],
+      "correctAnswers": ["Gilet rétro-réfléchissant"],
+      "explanation": "Le port du gilet rétro-réfléchissant est obligatoire pour les cyclistes hors agglomération la nuit ou par visibilité insuffisante.",
+      "difficulty": "medium"
+    },
+
+    {
+      "id": "24",
+      "category": "official_code",
+      "theme": "reglementation_generale",
+      "question": "Combien de temps le permis de conduire est-il valide ?",
+      "options": ["10 ans", "15 ans", "À vie", "5 ans"],
+      "correctAnswers": ["15 ans"],
+      "explanation": "Le permis de conduire est valide 15 ans à partir de sa date de délivrance pour les catégories B.",
+      "difficulty": "medium"
+    },
+    {
+      "id": "25",
+      "category": "official_code",
+      "theme": "reglementation_generale",
+      "question": "Quel document doit-on présenter en cas de contrôle ?",
+      "options": ["Permis seulement", "Assurance seulement", "Permis, assurance et carte grise", "Carte d'identité"],
+      "correctAnswers": ["Permis, assurance et carte grise"],
+      "explanation": "Les trois documents obligatoires sont le permis de conduire, l'attestation d'assurance et la carte grise.",
+      "difficulty": "easy"
+    },
+    {
+      "id": "26",
+      "category": "official_code",
+      "theme": "reglementation_generale",
+      "question": "Que risque-t-on en conduisant sans assurance ?",
+      "options": ["Amende seulement", "Confiscation du véhicule", "Annulation du permis", "Toutes les réponses"],
+      "correctAnswers": ["Toutes les réponses"],
+      "explanation": "Conduire sans assurance peut entraîner une forte amende, la confiscation du véhicule et l'annulation du permis.",
+      "difficulty": "hard"
+    },
+    {
+      "id": "27",
+      "category": "official_code",
+      "theme": "reglementation_generale",
+      "question": "L'assurance au tiers couvre-t-elle les dommages à votre propre véhicule ?",
+      "options": ["Oui", "Non", "Partiellement", "Selon les cas"],
+      "correctAnswers": ["Non"],
+      "explanation": "L'assurance au tiers ne couvre que les dommages causés aux autres, pas à votre propre véhicule.",
+      "difficulty": "medium"
+    },
+
+    {
+      "id": "28",
+      "category": "official_code",
+      "theme": "precautions_diverses",
+      "question": "Par temps de brouillard, quels feux doit-on allumer ?",
+      "options": ["Feux de route", "Feux de croisement et feux de brouillard", "Warnings", "Feux de position seulement"],
+      "correctAnswers": ["Feux de croisement et feux de brouillard"],
+      "explanation": "Par visibilité réduite, il faut allumer les feux de croisement et les feux de brouillard avant et/ou arrière.",
+      "difficulty": "easy"
+    },
+    {
+      "id": "29",
+      "category": "official_code",
+      "theme": "precautions_diverses",
+      "question": "À quelle distance doit-on poser un triangle de présignalisation ?",
+      "options": ["30 mètres", "50 mètres", "100 mètres", "150 mètres"],
+      "correctAnswers": ["30 mètres"],
+      "explanation": "Le triangle de présignalisation doit être placé à 30 mètres minimum en amont du véhicule en panne.",
+      "difficulty": "medium"
+    },
+    {
+      "id": "30",
+      "category": "official_code",
+      "theme": "precautions_diverses",
+      "question": "Que faire en cas d'éblouissement par un véhicule venant en face ?",
+      "options": ["Faire des appels de phares", "Regarder vers la droite", "Accélérer", "Klaxonner"],
+      "correctAnswers": ["Regarder vers la droite"],
+      "explanation": "En cas d'éblouissement, il faut regarder vers le bord droit de la chaussée pour éviter l'aveuglement.",
+      "difficulty": "medium"
+    },
+
+    {
+      "id": "31",
+      "category": "official_code",
+      "theme": "elements_mecaniques_securite",
+      "question": "Quelle est la profondeur minimale des sculptures des pneus ?",
+      "options": ["1,2 mm", "1,6 mm", "2,0 mm", "2,5 mm"],
+      "correctAnswers": ["1,6 mm"],
+      "explanation": "La profondeur minimale légale des sculptures est de 1,6 mm sur toute la largeur du pneu.",
+      "difficulty": "medium"
+    },
+    {
+      "id": "32",
+      "category": "official_code",
+      "theme": "elements_mecaniques_securite",
+      "question": "À quelle fréquence doit-on contrôler la pression des pneus ?",
+      "options": ["Chaque semaine", "Chaque mois", "Tous les 3 mois", "Une fois par an"],
+      "correctAnswers": ["Chaque mois"],
+      "explanation": "Il est recommandé de vérifier la pression des pneus au moins une fois par mois.",
+      "difficulty": "easy"
+    },
+    {
+      "id": "33",
+      "category": "official_code",
+      "theme": "elements_mecaniques_securite",
+      "question": "Que doit-on vérifier avant un long voyage ?",
+      "options": ["Pneus seulement", "Niveaux et éclairage", "Freins et direction", "Tout l'équipement"],
+      "correctAnswers": ["Tout l'équipement"],
+      "explanation": "Avant un long voyage, il faut vérifier tous les éléments : pneus, niveaux, éclairage, freins, direction, etc.",
+      "difficulty": "easy"
+    },
+
+    {
+      "id": "34",
+      "category": "official_code",
+      "theme": "equipements_securite",
+      "question": "Le port de la ceinture de sécurité est-il obligatoire à l'arrière ?",
+      "options": ["Oui", "Non", "Seulement sur autoroute", "Seulement pour les enfants"],
+      "correctAnswers": ["Oui"],
+      "explanation": "Le port de la ceinture de sécurité est obligatoire à toutes les places équipées, avant et arrière.",
+      "difficulty": "easy"
+    },
+    {
+      "id": "35",
+      "category": "official_code",
+      "theme": "equipements_securite",
+      "question": "Jusqu'à quel âge un enfant doit-il être installé dans un siège auto ?",
+      "options": ["8 ans", "10 ans", "12 ans", "Jusqu'à 1,35 m"],
+      "correctAnswers": ["10 ans"],
+      "explanation": "Un enfant doit utiliser un système de retenue adapté jusqu'à l'âge de 10 ans.",
+      "difficulty": "medium"
+    },
+    {
+      "id": "36",
+      "category": "official_code",
+      "theme": "equipements_securite",
+      "question": "Peut-on installer un siège bébé face à la route à l'avant ?",
+      "options": ["Oui, toujours", "Non, jamais", "Seulement si l'airbag est désactivé", "Seulement après 2 ans"],
+      "correctAnswers": ["Seulement si l'airbag est désactivé"],
+      "explanation": "Un siège bébé dos à la route peut être installé à l'avant uniquement si l'airbag passager est désactivé.",
+      "difficulty": "hard"
+    },
+
+    {
+      "id": "37",
+      "category": "official_code",
+      "theme": "regle_circulation",
+      "question": "Dans une intersection, qui a la priorité entre un véhicule qui va tout droit et un qui tourne à gauche ?",
+      "options": ["Celui qui va tout droit", "Celui qui tourne", "Le plus gros véhicule", "Celui qui arrive en premier"],
+      "correctAnswers": ["Celui qui va tout droit"],
+      "explanation": "Le véhicule qui va tout droit a toujours la priorité sur celui qui tourne, sauf signalisation contraire.",
+      "difficulty": "easy"
+    },
+    {
+      "id": "38",
+      "category": "official_code",
+      "theme": "regle_circulation",
+      "question": "Que signifie un feu orange fixe ?",
+      "options": ["Accélérer", "S'arrêter si possible", "Continuer", "Céder le passage"],
+      "correctAnswers": ["S'arrêter si possible"],
+      "explanation": "Le feu orange impose l'arrêt sauf si l'on ne peut pas s'arrêter dans de bonnes conditions de sécurité.",
+      "difficulty": "medium"
+    },
+
+    {
+      "id": "39",
+      "category": "official_code",
+      "theme": "environnement",
+      "question": "Quelle conduite permet de réduire la consommation de carburant ?",
+      "options": ["Conduite sportive", "Éco-conduite", "Vitesse constante élevée", "Freinages brusques"],
+      "correctAnswers": ["Éco-conduite"],
+      "explanation": "L'éco-conduite, avec des accélérations douces et l'anticipation, permet de réduire significativement la consommation.",
+      "difficulty": "easy"
+    },
+    {
+      "id": "40",
+      "category": "official_code",
+      "theme": "environnement",
+      "question": "Que produit un véhicule diesel en plus qu'un véhicule essence ?",
+      "options": ["CO2", "Particules fines", "Vapeur d'eau", "Oxygène"],
+      "correctAnswers": ["Particules fines"],
+      "explanation": "Les moteurs diesel produisent plus de particules fines que les moteurs essence, d'où l'importance des filtres à particules.",
+      "difficulty": "medium"
+    },
+
+    {
+      "id": "41",
+      "category": "general_knowledge",
+      "theme": "circulation_routiere",
+      "question": "Quelle est la vitesse maximale d'un cyclomoteur ?",
+      "options": ["25 km/h", "45 km/h", "50 km/h", "60 km/h"],
+      "correctAnswers": ["45 km/h"],
+      "explanation": "Un cyclomoteur est limité à 45 km/h par construction.",
+      "difficulty": "easy"
+    },
+    {
+      "id": "42",
+      "category": "general_knowledge",
+      "theme": "conducteur",
+      "question": "Combien de verres d'alcool peut-on boire avant de conduire ?",
+      "options": ["1 verre", "2 verres", "3 verres", "Aucun pour être sûr"],
+      "correctAnswers": ["Aucun pour être sûr"],
+      "explanation": "Il n'y a pas de règle universelle car l'alcoolémie dépend de nombreux facteurs. Le plus sûr est de ne pas boire.",
+      "difficulty": "medium"
+    },
+    {
+      "id": "43",
+      "category": "general_knowledge",
+      "theme": "route",
+      "question": "Que signifie le terme 'adhérence' ?",
+      "options": ["Vitesse du véhicule", "Accrochage des pneus sur la route", "Distance de freinage", "Angle de braquage"],
+      "correctAnswers": ["Accrochage des pneus sur la route"],
+      "explanation": "L'adhérence est la capacité des pneus à 'accrocher' sur la chaussée, essentielle pour la sécurité.",
+      "difficulty": "medium"
+    },
+    {
+      "id": "44",
+      "category": "general_knowledge",
+      "theme": "autres_usagers",
+      "question": "Un piéton doit-il emprunter le trottoir quand il existe ?",
+      "options": ["Oui, obligatoirement", "Non, il peut choisir", "Seulement en ville", "Seulement la nuit"],
+      "correctAnswers": ["Oui, obligatoirement"],
+      "explanation": "Quand un trottoir existe, les piétons ont l'obligation de l'emprunter.",
+      "difficulty": "easy"
+    },
+    {
+      "id": "45",
+      "category": "general_knowledge",
+      "theme": "reglementation_generale",
+      "question": "Peut-on prêter son véhicule à quelqu'un qui n'a pas le permis ?",
+      "options": ["Oui", "Non", "Seulement en privé", "Avec accompagnateur"],
+      "correctAnswers": ["Non"],
+      "explanation": "Il est interdit de prêter son véhicule à une personne qui n'a pas le permis de conduire correspondant.",
+      "difficulty": "easy"
+    },
+    {
+      "id": "46",
+      "category": "general_knowledge",
+      "theme": "precautions_diverses",
+      "question": "Que faire si on ressent de la fatigue au volant ?",
+      "options": ["Ouvrir les fenêtres", "Boire du café", "S'arrêter et se reposer", "Mettre la musique fort"],
+      "correctAnswers": ["S'arrêter et se reposer"],
+      "explanation": "La seule solution efficace contre la fatigue est l'arrêt et le repos (sieste de 15-20 minutes).",
+      "difficulty": "easy"
+    },
+    {
+      "id": "47",
+      "category": "general_knowledge",
+      "theme": "elements_mecaniques_securite",
+      "question": "À quoi sert l'ABS ?",
+      "options": ["Réduire la vitesse", "Éviter le blocage des roues", "Améliorer la direction", "Économiser le carburant"],
+      "correctAnswers": ["Éviter le blocage des roues"],
+      "explanation": "L'ABS (Anti-Blocking System) évite le blocage des roues lors d'un freinage d'urgence.",
+      "difficulty": "medium"
+    },
+    {
+      "id": "48",
+      "category": "general_knowledge",
+      "theme": "equipements_securite",
+      "question": "Combien de temps peut-on garder un casque de moto ?",
+      "options": ["2 ans", "5 ans", "10 ans", "À vie s'il n'est pas abîmé"],
+      "correctAnswers": ["5 ans"],
+      "explanation": "Un casque de moto doit être changé tous les 5 ans environ, car les matériaux se dégradent avec le temps.",
+      "difficulty": "hard"
+    },
+    {
+      "id": "49",
+      "category": "general_knowledge",
+      "theme": "regle_circulation",
+      "question": "Peut-on s'arrêter sur une voie de bus ?",
+      "options": ["Oui, 5 minutes maximum", "Non, jamais", "Seulement pour charger", "Seulement la nuit"],
+      "correctAnswers": ["Non, jamais"],
+      "explanation": "Il est strictement interdit de s'arrêter ou de circuler sur une voie réservée aux bus.",
+      "difficulty": "easy"
+    },
+    {
+      "id": "50",
+      "category": "general_knowledge",
+      "theme": "environnement",
+      "question": "Quel est l'impact d'un véhicule mal entretenu sur la pollution ?",
+      "options": ["Aucun impact", "Pollution réduite", "Pollution augmentée", "Impact variable"],
+      "correctAnswers": ["Pollution augmentée"],
+      "explanation": "Un véhicule mal entretenu pollue davantage : filtre encrassé, mauvaise combustion, pneus sous-gonflés, etc.",
+      "difficulty": "easy"
+    }
+  ]
+}
