@@ -20,11 +20,6 @@ const initialUserProfile: UserProfile = {
   },
 };
 
-const initialUserState: UserState = {
-  profile: initialUserProfile,
-  isLoaded: false,
-};
-
 function userReducer(state: UserState, action: UserAction): UserState {
   switch (action.type) {
     case 'LOAD_PROFILE':

@@ -1,7 +1,6 @@
 import { createGlobalStyle } from 'styled-components'
-import { Theme } from './theme'
 
-export const GlobalStyle = createGlobalStyle<{ theme: Theme }>`
+export const GlobalStyle = createGlobalStyle`
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
   * {
@@ -17,11 +16,11 @@ export const GlobalStyle = createGlobalStyle<{ theme: Theme }>`
 
   body {
     height: 100%;
-    font-family: ${({ theme }) => theme.typography.fontFamily};
-    font-size: ${({ theme }) => theme.typography.base};
-    font-weight: ${({ theme }) => theme.typography.regular};
-    color: ${({ theme }) => theme.colors.textPrimary};
-    background: ${({ theme }) => theme.colors.backgroundDark};
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 1rem;
+    font-weight: 400;
+    color: #FFFFFF;
+    background: #0A0A0B;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -33,33 +32,33 @@ export const GlobalStyle = createGlobalStyle<{ theme: Theme }>`
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-weight: ${({ theme }) => theme.typography.semibold};
+    font-weight: 600;
     line-height: 1.3;
     margin: 0;
   }
 
   h1 {
-    font-size: ${({ theme }) => theme.typography['4xl']};
+    font-size: 2.25rem;
   }
 
   h2 {
-    font-size: ${({ theme }) => theme.typography['3xl']};
+    font-size: 1.875rem;
   }
 
   h3 {
-    font-size: ${({ theme }) => theme.typography['2xl']};
+    font-size: 1.5rem;
   }
 
   h4 {
-    font-size: ${({ theme }) => theme.typography.xl};
+    font-size: 1.25rem;
   }
 
   h5 {
-    font-size: ${({ theme }) => theme.typography.lg};
+    font-size: 1.125rem;
   }
 
   h6 {
-    font-size: ${({ theme }) => theme.typography.base};
+    font-size: 1rem;
   }
 
   p {
@@ -98,11 +97,11 @@ export const GlobalStyle = createGlobalStyle<{ theme: Theme }>`
   }
 
   a {
-    color: ${({ theme }) => theme.colors.electricBlue};
+    color: #00D4FF;
     text-decoration: none;
     
     &:hover {
-      color: ${({ theme }) => theme.colors.electricBlueLight};
+      color: #33DDFF;
     }
   }
 
@@ -116,22 +115,22 @@ export const GlobalStyle = createGlobalStyle<{ theme: Theme }>`
   }
 
   ::-webkit-scrollbar-track {
-    background: ${({ theme }) => theme.colors.backgroundMedium};
+    background: #1A1A1B;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: ${({ theme }) => theme.colors.electricBlue};
+    background: #00D4FF;
     border-radius: 4px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: ${({ theme }) => theme.colors.electricBlueLight};
+    background: #33DDFF;
   }
 
   /* Selection */
   ::selection {
-    background: ${({ theme }) => theme.colors.electricBlue};
-    color: ${({ theme }) => theme.colors.backgroundDark};
+    background: #00D4FF;
+    color: #0A0A0B;
   }
 
   /* Focus styles for accessibility */
@@ -140,7 +139,7 @@ export const GlobalStyle = createGlobalStyle<{ theme: Theme }>`
   textarea:focus-visible,
   select:focus-visible,
   a:focus-visible {
-    outline: 2px solid ${({ theme }) => theme.colors.electricBlue};
+    outline: 2px solid #00D4FF;
     outline-offset: 2px;
   }
 `

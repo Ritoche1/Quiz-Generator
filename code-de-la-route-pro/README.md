@@ -1,46 +1,212 @@
-# Getting Started with Create React App
+# Code de la Route Pro
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Une application web complète de préparation à l'examen du permis de conduire français, développée avec React et TypeScript.
 
-## Available Scripts
+![Dashboard](https://github.com/user-attachments/assets/c26308bd-8b30-46bc-ab6b-8a399e774141)
 
-In the project directory, you can run:
+## ✨ Fonctionnalités
 
-### `npm start`
+### 🎯 **Examen Blanc**
+- 40 questions chronométrées selon la répartition officielle ETG
+- Timer de 20 secondes par question avec auto-soumission
+- Conditions réelles d'examen (pas de feedback immédiat)
+- Répartition thématique conforme aux 10 thèmes ETG officiels
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+![Quiz Interface](https://github.com/user-attachments/assets/542304e5-2d06-4e18-a377-c5262d0748a7)
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+### 🚗 **Reconnaissance de Marques**
+- Quiz de reconnaissance des logos automobiles
+- Intégration avec l'API GitHub pour les logos de marques
+- Interface similaire à l'examen blanc
 
-### `npm test`
+### 📊 **Statistiques et Suivi**
+- Analyse des performances par thème
+- Historique des tentatives
+- Calcul du score de passage (35/40)
+- Statistiques détaillées de progression
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### 🎨 **Design HUD Moderne**
+- Interface "Heads-Up Display" sombre
+- Effets de glass morphism
+- Accents bleu électrique avec effets de glow
+- Design responsive pour mobile et desktop
 
-### `npm run build`
+## 🛠️ Technologies Utilisées
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- **React 18** avec Create React App
+- **TypeScript** pour la sécurité des types
+- **styled-components** pour le styling
+- **react-router-dom** pour le routing
+- **react-feather** pour les icônes
+- **Context API + useReducer** pour la gestion d'état
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## 📋 Architecture des Données
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Base de Questions
+- 50+ questions couvrant tous les thèmes ETG officiels
+- Format conforme au schéma `QuizQuestion`
+- Support des questions à choix multiples
+- Explications détaillées pour chaque question
 
-### `npm run eject`
+### Répartition Thématique ETG
+- Circulation Routière (8 questions - 20%)
+- Conducteur (6 questions - 15%)
+- Route (5 questions - 12.5%)
+- Autres Usagers (4 questions - 10%)
+- Réglementation Générale (4 questions - 10%)
+- Précautions Diverses (3 questions - 7.5%)
+- Éléments Mécaniques & Sécurité (3 questions - 7.5%)
+- Équipements de Sécurité (3 questions - 7.5%)
+- Règle de Circulation (2 questions - 5%)
+- Environnement (2 questions - 5%)
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+## 🚀 Installation et Démarrage
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Prérequis
+- Node.js 14+ 
+- npm ou yarn
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+### Installation
+```bash
+# Cloner le repository
+git clone https://github.com/Ritoche1/Quiz-Generator.git
+cd Quiz-Generator/code-de-la-route-pro
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+# Installer les dépendances
+npm install
 
-## Learn More
+# Démarrer l'application en développement
+npm start
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+L'application sera disponible sur `http://localhost:3000`
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### Build de Production
+```bash
+# Créer le build de production
+npm run build
+
+# Les fichiers seront générés dans le dossier /build
+```
+
+## 📁 Structure du Projet
+
+```
+code-de-la-route-pro/
+├── public/                     # Fichiers statiques
+├── src/
+│   ├── assets/                 # Images et icônes
+│   ├── components/             # Composants React
+│   │   ├── ui/                 # Composants UI réutilisables
+│   │   └── layout/             # Composants de mise en page
+│   ├── context/                # Contextes React (state management)
+│   ├── data/                   # Base de données des questions
+│   │   └── database.json       # 50+ questions ETG
+│   ├── hooks/                  # Hooks personnalisés
+│   ├── pages/                  # Pages de l'application
+│   ├── styles/                 # Thème et styles globaux
+│   ├── types/                  # Définitions TypeScript
+│   ├── utils/                  # Fonctions utilitaires
+│   └── App.tsx                 # Composant principal
+├── package.json
+└── README.md
+```
+
+## 🎯 Utilisation
+
+### Examen Blanc
+1. Cliquez sur "Examen Blanc" depuis le dashboard
+2. Répondez aux 40 questions chronométrées
+3. Consultez vos résultats avec la répartition thématique
+4. Révisez vos erreurs avec les explications détaillées
+
+### Reconnaissance de Marques
+1. Cliquez sur "Reconnaissance de Marques"
+2. Identifiez les logos automobiles présentés
+3. Testez vos connaissances des marques internationales
+
+### Suivi des Performances
+- Consultez vos statistiques dans la section dédiée
+- Analysez votre progression dans le temps
+- Identifiez vos points forts et axes d'amélioration
+
+## 🔧 Fonctionnalités Techniques
+
+### Gestion d'État
+- **React Context API** pour l'état global
+- **useReducer** pour la logique complexe
+- **localStorage** pour la persistance locale
+
+### Hooks Personnalisés
+- `useLocalStorage` - Persistance automatique
+- `useTimer` - Gestion du timer 20 secondes
+
+### Algorithmes
+- Sélection aléatoire des questions selon la répartition ETG
+- Calcul intelligent du score avec analyse thématique
+- Génération automatique de quiz de marques automobiles
+
+## 🎨 Système de Design
+
+### Palette de Couleurs
+- **Bleu Électrique**: `#00D4FF` (accent principal)
+- **Fond Sombre**: `#0A0A0B` (arrière-plan)
+- **Succès**: `#00FF88`
+- **Erreur**: `#FF4444`
+
+### Effets Visuels
+- Glass morphism avec `backdrop-filter: blur(20px)`
+- Ombres incrustées pour l'effet HUD
+- Effets de glow sur les éléments interactifs
+
+## 📱 Responsive Design
+
+L'application est entièrement responsive et optimisée pour:
+- 📱 **Mobile** (320px+)
+- 📱 **Tablette** (768px+)  
+- 🖥️ **Desktop** (1024px+)
+
+## 🧪 Tests
+
+```bash
+# Lancer les tests
+npm test
+
+# Tests de couverture
+npm run test:coverage
+```
+
+## 🚀 Déploiement
+
+L'application est prête pour le déploiement sur :
+- **Vercel** (recommandé)
+- **Netlify**
+- **GitHub Pages**
+- Tout serveur statique
+
+```bash
+npm run build
+# Déployer le contenu du dossier /build
+```
+
+## 🤝 Contribution
+
+1. Fork le projet
+2. Créer une branche feature (`git checkout -b feature/AmazingFeature`)
+3. Commit vos changements (`git commit -m 'Add some AmazingFeature'`)
+4. Push vers la branche (`git push origin feature/AmazingFeature`)
+5. Ouvrir une Pull Request
+
+## 📄 Licence
+
+Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
+
+## 🙏 Remerciements
+
+- Questions basées sur le programme officiel ETG français
+- Logos automobiles via l'API GitHub publique
+- Design inspiré par les interfaces HUD modernes
+
+---
+
+**Développé avec ❤️ pour aider à la préparation du permis de conduire français**
