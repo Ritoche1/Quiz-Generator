@@ -1,5 +1,6 @@
 import "@/styles/globals.css";
 import AppShell from "@/components/AppShell";
+import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 
 export const metadata = {
   title: "Quiz Generator",
@@ -22,9 +23,11 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className="antialiased min-h-screen">
-        <AppShell>
-          {children}
-        </AppShell>
+        <SubscriptionProvider>
+          <AppShell>
+            {children}
+          </AppShell>
+        </SubscriptionProvider>
       </body>
     </html>
   );
