@@ -2,7 +2,28 @@
 'use client';
 import jsPDF from 'jspdf';
 
+// Check if user has PDF export permissions
+function checkPDFPermission() {
+  // This will be injected by components that have access to subscription context
+  if (window._subscriptionStatus && typeof window._subscriptionStatus.canExportPDF === 'function') {
+    return window._subscriptionStatus.canExportPDF();
+  }
+  
+  // Default to false if subscription status is not available
+  return false;
+}
+
+function showUpgradeModal() {
+  // Trigger subscription modal
+  window.dispatchEvent(new CustomEvent('showSubscriptionModal'));
+}
+
 export async function generateReportPDF(quiz, selectedAnswers) {
+  // Check subscription permission
+  if (!checkPDFPermission()) {
+    showUpgradeModal();
+    throw new Error('PDF export requires Premium subscription. Please upgrade to access this feature.');
+  }
   const pdf = new jsPDF();
   const pageWidth = pdf.internal.pageSize.width;
   const pageHeight = pdf.internal.pageSize.height;
@@ -104,6 +125,11 @@ export async function generateReportPDF(quiz, selectedAnswers) {
 }
 
 export async function generateWorksheetPDF(quiz) {
+  // Check subscription permission
+  if (!checkPDFPermission()) {
+    showUpgradeModal();
+    throw new Error('PDF export requires Premium subscription. Please upgrade to access this feature.');
+  }
   const pdf = new jsPDF();
   const pageWidth = pdf.internal.pageSize.width;
   const pageHeight = pdf.internal.pageSize.height;

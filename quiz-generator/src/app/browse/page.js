@@ -1,6 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSubscription } from '../../contexts/SubscriptionContext';
+import PremiumBadge from '../../components/PremiumBadge';
+import SubscriptionModal from '../../components/SubscriptionModal';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}` : 'http://localhost:5000';
 
@@ -13,7 +16,11 @@ export default function BrowseQuizzes() {
   const [selectedDifficulty, setSelectedDifficulty] = useState('all');
   const [selectedLanguage, setSelectedLanguage] = useState('all');
   const [sortBy, setSortBy] = useState('created');
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [browseData, setBrowseData] = useState(null);
   const router = useRouter();
+  
+  const { canAccessPremiumContent } = useSubscription();
 
   const languages = ['all', 'English', 'Spanish', 'French', 'German', 'Italian', 'Portuguese', 'Dutch', 'Russian', 'Japanese', 'Korean', 'Chinese', 'Arabic', 'Hindi', 'Turkish', 'Polish'];
 
@@ -26,11 +33,23 @@ export default function BrowseQuizzes() {
     filterAndSortQuizzes();
   }, [quizzes, searchTerm, selectedDifficulty, selectedLanguage, sortBy]);
 
+  // Listen for subscription modal events
+  useEffect(() => {
+    const handleShowSubscriptionModal = () => {
+      setShowSubscriptionModal(true)
+    }
+
+    window.addEventListener('showSubscriptionModal', handleShowSubscriptionModal)
+    return () => {
+      window.removeEventListener('showSubscriptionModal', handleShowSubscriptionModal)
+    }
+  }, [])
+
   const checkAuth = async () => {
-    const token = localStorage.getItem('quizToken');
+    const token = localStorage.getItem('token');
     if (token) {
       try {
-        const response = await fetch(`${baseUrl}/auth/me`, {
+        const response = await fetch(`${baseUrl}/api/auth/me`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -48,12 +67,23 @@ export default function BrowseQuizzes() {
 
   const fetchQuizzes = async () => {
     try {
-      const response = await fetch(`${baseUrl}/quizzes/browse/public`);
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      
+      const response = await fetch(`${baseUrl}/api/quizzes/browse/public`, {
+        headers
+      });
+      
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
+      
       const data = await response.json();
-      setQuizzes(data);
+      setBrowseData(data);
+      
+      // Extract quizzes from the new API response format
+      const quizzesArray = data.quizzes || data;
+      setQuizzes(quizzesArray);
     } catch (error) {
       console.error('Error fetching quizzes:', error);
       // For now, set empty array if API fails
@@ -121,13 +151,20 @@ export default function BrowseQuizzes() {
   };
 
   const handleStartQuiz = (quiz) => {
-    const token = localStorage.getItem('quizToken');
+    const token = localStorage.getItem('token');
     if (!token) {
       // Redirect unauthenticated users to login page with return path
       const returnTo = encodeURIComponent(`/browse`);
       router.push(`/?redirect=${returnTo}`);
       return;
     }
+    
+    // Check if this is a premium quiz and user doesn't have access
+    if (quiz.is_premium && !canAccessPremiumContent()) {
+      setShowSubscriptionModal(true);
+      return;
+    }
+    
     router.push(`/?quiz=${quiz.id}`);
   };
 
@@ -238,13 +275,23 @@ export default function BrowseQuizzes() {
           {/* Quiz Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredQuizzes.map((quiz) => (
-              <div key={quiz.id} className="card hover-lift">
+              <div key={quiz.id} className="card hover-lift relative">
+                {/* Premium badge */}
+                {quiz.is_premium && (
+                  <div className="absolute top-4 right-4 z-10">
+                    <PremiumBadge size="sm" />
+                  </div>
+                )}
+                
                 <div className="p-6">
                   {/* Header */}
                   <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
+                    <div className="flex-1 pr-4">
                       <h3 className="text-xl font-bold text-gray-800 mb-2 line-clamp-2">
                         {quiz.title}
+                        {quiz.is_premium && !canAccessPremiumContent() && (
+                          <span className="ml-2 text-xs text-orange-500">🔒</span>
+                        )}
                       </h3>
                       <p className="text-gray-600 text-sm mb-3 line-clamp-3">
                         {quiz.description}
@@ -302,9 +349,15 @@ export default function BrowseQuizzes() {
                     
                     <button
                       onClick={() => handleStartQuiz(quiz)}
-                      className="btn-primary px-4 py-2 text-sm"
+                      className={`
+                        px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300
+                        ${quiz.is_premium && !canAccessPremiumContent() 
+                          ? 'bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white' 
+                          : 'btn-primary'
+                        }
+                      `}
                     >
-                      Start Quiz
+                      {quiz.is_premium && !canAccessPremiumContent() ? '🔓 Upgrade to Access' : 'Start Quiz'}
                     </button>
                   </div>
                 </div>
@@ -334,6 +387,12 @@ export default function BrowseQuizzes() {
           )}
         </div>
       </div>
+      
+      {/* Subscription Modal */}
+      <SubscriptionModal 
+        isOpen={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+      />
     </>
   );
 }
