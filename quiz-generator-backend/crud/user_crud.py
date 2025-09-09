@@ -1,14 +1,47 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, or_, and_
 from database.models import User, Friendship
+from datetime import datetime
+from typing import Optional
 
 async def get_user_by_email(db: AsyncSession, email: str):
     result = await db.execute(select(User).where(User.email == email))
     return result.scalars().first()
 
+async def get_user_by_stripe_customer_id(db: AsyncSession, stripe_customer_id: str):
+    """Get user by Stripe customer ID."""
+    result = await db.execute(select(User).where(User.stripe_customer_id == stripe_customer_id))
+    return result.scalars().first()
+
 async def create_user(db: AsyncSession, user_data: dict):
     user = User(**user_data)
     db.add(user)
+    await db.commit()
+    await db.refresh(user)
+    return user
+
+async def update_user_subscription(
+    db: AsyncSession, 
+    user_id: int, 
+    subscription_type: Optional[str] = None,
+    stripe_customer_id: Optional[str] = None,
+    stripe_subscription_id: Optional[str] = None,
+    subscription_ends_at: Optional[datetime] = None
+):
+    """Update user subscription information."""
+    user = await db.get(User, user_id)
+    if not user:
+        return None
+    
+    if subscription_type is not None:
+        user.subscription_type = subscription_type
+    if stripe_customer_id is not None:
+        user.stripe_customer_id = stripe_customer_id
+    if stripe_subscription_id is not None:
+        user.stripe_subscription_id = stripe_subscription_id
+    if subscription_ends_at is not None:
+        user.subscription_ends_at = subscription_ends_at
+    
     await db.commit()
     await db.refresh(user)
     return user

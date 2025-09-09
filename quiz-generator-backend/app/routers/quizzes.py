@@ -5,6 +5,7 @@ from sqlalchemy import select, func
 from database.database import get_db
 from database.models import User, Quiz, UserScore
 from app.routers.auth import get_current_user
+from app.services.subscription_service import subscription_service
 from crud.quiz_crud import *
 from schemas.quiz import *
 import logging
@@ -46,10 +47,28 @@ async def fetch_all_quizzes(db: AsyncSession = Depends(get_db)):
     return await get_all_quizzes(db)
 
 @router.get("/{quiz_id}", response_model=QuizResponse)
-async def get_single_quiz(quiz_id: int, db: AsyncSession = Depends(get_db)):
+async def get_single_quiz(
+    quiz_id: int, 
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get a single quiz, checking subscription access for premium content."""
     quiz = await get_quiz(db, quiz_id)
     if not quiz:
         raise HTTPException(status_code=404, detail="Quiz not found")
+    
+    # Check if user can access this quiz
+    can_access = await subscription_service.can_access_quiz(current_user, quiz)
+    if not can_access:
+        raise HTTPException(
+            status_code=403, 
+            detail={
+                "error": "Premium content access required",
+                "message": "This quiz is premium content. Upgrade to Premium to access it.",
+                "premium_required": True
+            }
+        )
+    
     return quiz
 
 @router.get("/count")
@@ -141,9 +160,15 @@ async def browse_public_quizzes(
     sort_by: str = "created",
     page: int = 1,
     limit: int = 20,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Browse public quizzes with filtering and pagination"""
+    """Browse public quizzes with filtering and pagination. Premium content filtered by subscription."""
+    
+    # Check user's subscription status for premium content filtering
+    subscription_status = await subscription_service.check_user_subscription_status(current_user)
+    can_access_premium = subscription_status['can_access_premium_content']
+    
     # Select explicit quiz columns and left join user to get creator username
     query = select(
         Quiz.id.label('quiz_id'),  # Explicitly label the quiz ID
@@ -154,12 +179,17 @@ async def browse_public_quizzes(
         Quiz.difficulty.label('difficulty'),
         Quiz.owner_id.label('owner_id'),
         Quiz.is_public.label('is_public'),
+        Quiz.is_premium.label('is_premium'),  # Include premium flag
         Quiz.created_at.label('created_at'),
         User.username.label('username')
     ).join(User, Quiz.owner_id == User.id, isouter=True)
 
     # Only public quizzes
     query = query.where(Quiz.is_public == True)
+    
+    # Filter premium content for free users
+    if not can_access_premium:
+        query = query.where(Quiz.is_premium == False)
 
     # Apply filters
     if search:
@@ -200,6 +230,7 @@ async def browse_public_quizzes(
         quiz_id = row.get("quiz_id")  # Use the correct label
         creator_name = row.get("username") or "Anonymous"
         questions = row.get("questions") or []
+        is_premium = bool(row.get("is_premium"))
 
         stats_query = await db.execute(
             select(
@@ -223,10 +254,23 @@ async def browse_public_quizzes(
             "creator": creator_name,
             "created": row.get("created_at"),
             "tags": [],
-            "is_public": bool(row.get("is_public"))
+            "is_public": bool(row.get("is_public")),
+            "is_premium": is_premium,
+            "premium_badge": is_premium and not can_access_premium  # Show premium badge for inaccessible content
         })
 
-    return enhanced_quizzes
+    return {
+        "quizzes": enhanced_quizzes,
+        "pagination": {
+            "page": page,
+            "limit": limit,
+            "has_more": len(enhanced_quizzes) == limit  # Simple check for more pages
+        },
+        "user_subscription": {
+            "type": subscription_status['subscription_type'],
+            "can_access_premium": can_access_premium
+        }
+    }
 
 @router.delete("/{quiz_id}")
 async def delete_quiz_endpoint(

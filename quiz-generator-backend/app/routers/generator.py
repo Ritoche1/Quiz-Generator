@@ -1,15 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException
 from app.services.mistral_service import generate_quiz_content
 from app.services.quiz_service import save_generated_quiz
+from app.services.subscription_service import subscription_service
 from database.database import get_db
 from database.models import User
-from database.models import Generation
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
-from datetime import datetime, date
 from app.routers.auth import get_current_user
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Dict, Any
 
 router = APIRouter(prefix="/generate", tags=["quiz-generation"])
 
@@ -30,8 +28,12 @@ class GeneratedQuizResponse(BaseModel):
     difficulty: str
     questions: List[QuizQuestion]
 
-# Daily generation limit per user
-DAILY_GENERATION_LIMIT = 5
+class GenerationLimitsResponse(BaseModel):
+    used: int
+    limit: int
+    remaining: int
+    can_generate: bool
+    subscription_type: str
 
 @router.post("/quiz", response_model=GeneratedQuizResponse)
 async def generate_quiz_endpoint(
@@ -40,19 +42,9 @@ async def generate_quiz_endpoint(
     db: AsyncSession = Depends(get_db)
 ):
     try:
-        # Count today's generations for the user
-        today = datetime.utcnow().date()
-        today_start = datetime.combine(today, datetime.min.time())
-        q = select(func.count(Generation.id)).where(
-            Generation.user_id == current_user.id,
-            Generation.created_at >= today_start
-        )
-        result = await db.execute(q)
-        used = result.scalar() or 0
-
-        if used >= DAILY_GENERATION_LIMIT:
-            raise HTTPException(status_code=429, detail="Daily generation limit reached")
-
+        # Validate user can generate a quiz (checks subscription limits)
+        await subscription_service.validate_generation_limit(db, current_user)
+        
         # Generate quiz content
         quiz_data = await generate_quiz_content(
             quiz_request.topic,
@@ -72,10 +64,8 @@ async def generate_quiz_endpoint(
             is_public=False,
         )
 
-        # Log the generation event
-        gen = Generation(user_id=current_user.id)
-        db.add(gen)
-        await db.commit()
+        # Record the generation event
+        await subscription_service.record_generation(db, current_user.id)
 
         return {
             "id": saved.id,
@@ -92,16 +82,25 @@ async def generate_quiz_endpoint(
             detail=f"Quiz generation failed: {str(e)}"
         )
 
-@router.get('/remaining')
-async def get_remaining_generations(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    # Count today's generations for the user
-    today = datetime.utcnow().date()
-    today_start = datetime.combine(today, datetime.min.time())
-    q = select(func.count(Generation.id)).where(
-        Generation.user_id == current_user.id,
-        Generation.created_at >= today_start
+@router.get('/remaining', response_model=GenerationLimitsResponse)
+async def get_remaining_generations(
+    current_user: User = Depends(get_current_user), 
+    db: AsyncSession = Depends(get_db)
+):
+    """Get user's daily generation limits and usage."""
+    usage = await subscription_service.check_daily_generation_limit(db, current_user)
+    
+    return GenerationLimitsResponse(
+        used=usage['used'],
+        limit=usage['limit'],
+        remaining=usage['remaining'],
+        can_generate=usage['can_generate'],
+        subscription_type=usage['subscription_type']
     )
-    result = await db.execute(q)
-    used = result.scalar() or 0
 
-    return {"remaining": max(0, DAILY_GENERATION_LIMIT - used)}
+@router.get('/limits', response_model=Dict[str, Any])
+async def get_subscription_limits(
+    current_user: User = Depends(get_current_user)
+):
+    """Get comprehensive subscription limits and features for the user."""
+    return await subscription_service.get_subscription_limits_info(current_user)

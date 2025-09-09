@@ -38,6 +38,10 @@ app.include_router(friends.router, prefix=prefix)
 from app.routers import notifications
 app.include_router(notifications.router, prefix=prefix)
 
+# Include subscription router
+from app.routers import subscription
+app.include_router(subscription.router, prefix=prefix)
+
 @app.get("/api/ping")
 async def ping():
     return {"ping": "pong"}

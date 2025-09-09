@@ -14,6 +14,7 @@ class Quiz(Base):
     difficulty = Column(String(255))
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # Added owner field
     is_public = Column(Boolean, nullable=False, server_default='0')  # New: public flag for browsing
+    is_premium = Column(Boolean, nullable=False, server_default='0')  # New: premium content flag
     created_at = Column(
         TIMESTAMP,
         server_default=func.now(),
@@ -53,6 +54,10 @@ class User(Base):
     email = Column(String(255), unique=True, index=True)
     username = Column(String(255))
     hashed_password = Column(String(255))
+    subscription_type = Column(String(20), nullable=False, server_default='free')  # 'free' or 'premium'
+    stripe_customer_id = Column(String(255), nullable=True)  # Stripe customer ID
+    stripe_subscription_id = Column(String(255), nullable=True)  # Stripe subscription ID
+    subscription_ends_at = Column(TIMESTAMP, nullable=True)  # When subscription expires
     created_at = Column(
         TIMESTAMP,
         server_default=func.now(),
