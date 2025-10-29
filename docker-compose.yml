@@ -1,8 +1,10 @@
-version: '3'
 services:
   frontend:
     container_name: quiz-frontend
-    build: ./quiz-generator
+    build:
+      context: ./quiz-generator
+      args:
+        NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL}
     depends_on:
       - backend
     networks:

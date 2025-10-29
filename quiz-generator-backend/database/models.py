@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, JSON, ForeignKey, TIMESTAMP, Index
+from sqlalchemy.orm import relationship
 from database.database import Base
 from sqlalchemy.sql import func
 
@@ -56,3 +57,20 @@ class User(Base):
         server_default=func.now(),
         nullable=False
     )
+    reset_tokens = relationship("PasswordResetToken", back_populates="user", cascade="all, delete-orphan")
+
+
+class PasswordResetToken(Base):
+    __tablename__ = "password_reset_tokens"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    token = Column(String(255), unique=True, index=True, nullable=False)
+    expires_at = Column(TIMESTAMP, nullable=False)
+    used_at = Column(TIMESTAMP, nullable=True)
+    created_at = Column(
+        TIMESTAMP,
+        server_default=func.now(),
+        nullable=False
+    )
+    user = relationship("User", back_populates="reset_tokens")
