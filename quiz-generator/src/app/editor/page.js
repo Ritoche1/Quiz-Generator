@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
+import TemplatePickerModal from '@/components/TemplatePickerModal';
+import ConfirmModal from '@/components/ConfirmModal';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}` : 'http://localhost:5000';
 
@@ -26,6 +28,8 @@ export default function QuizEditor() {
   const [showPreview, setShowPreview] = useState(false);
   const [previewCurrentQuestion, setPreviewCurrentQuestion] = useState(0);
   const [previewAnswers, setPreviewAnswers] = useState({});
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [showClearModal, setShowClearModal] = useState(false);
 
   const languages = ['English', 'Spanish', 'French', 'German', 'Italian', 'Portuguese', 'Dutch', 'Russian', 'Japanese', 'Korean', 'Chinese', 'Arabic', 'Hindi', 'Turkish', 'Polish'];
 
@@ -233,65 +237,64 @@ export default function QuizEditor() {
   };
 
   const importFromTemplate = async () => {
-    try {
-      // Fetch user's quiz history
-      const token = localStorage.getItem('quizToken');
-      const response = await fetch(`${baseUrl}/quizzes/history`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (response.ok) {
-        const userQuizzes = await response.json();
-        
-        if (userQuizzes.length === 0) {
-          alert('No quiz history found. Create your first quiz to use templates later!');
-          return;
-        }
-        
-        // For now, show simple selection - in a full implementation, we'd show a modal
-        const quizTitles = userQuizzes.map((q, i) => `${i + 1}. ${q.title}`).join('\n');
-        const selection = prompt(`Select a quiz template:\n\n${quizTitles}\n\nEnter the number (1-${userQuizzes.length}):`);
-        
-        const selectedIndex = parseInt(selection) - 1;
-        if (selectedIndex >= 0 && selectedIndex < userQuizzes.length) {
-          const selectedQuiz = userQuizzes[selectedIndex];
-          setQuiz(selectedQuiz);
-          setCurrentQuestionIndex(0);
-        } else {
-          alert('Invalid selection');
-        }
-      } else {
-        throw new Error('Failed to fetch quiz history');
-      }
-    } catch (error) {
-      console.error('Error loading user quiz history:', error);
-      
-      // Fallback to sample template
-      alert('Could not load your quiz history. Using a sample template instead.');
-      const template = {
-        title: 'Sample Quiz Template',
-        description: 'A sample quiz to help you get started',
-        language: 'English',
-        difficulty: 'easy',
-        questions: [
-          {
-            question: 'What is the capital of France?',
-            options: ['London', 'Berlin', 'Paris', 'Madrid'],
-            answer: 'Paris'
-          },
-          {
-            question: 'Which programming language is known for web development?',
-            options: ['Python', 'JavaScript', 'C++', 'Java'],
-            answer: 'JavaScript'
-          }
-        ]
-      };
-      setQuiz(template);
-      setCurrentQuestionIndex(0);
-    }
+    setShowTemplateModal(true);
   };
+
+  const handleSelectTemplate = (tpl) => {
+    setQuiz({
+      title: tpl.title,
+      description: tpl.description || '',
+      language: tpl.language || 'English',
+      difficulty: tpl.difficulty || 'easy',
+      questions: Array.isArray(tpl.questions) ? tpl.questions : [],
+      id: tpl.id
+    });
+    setCurrentQuestionIndex(0);
+    setShowTemplateModal(false);
+  };
+
+  const startFromBlank = () => {
+    setShowClearModal(true);
+  };
+
+  const confirmStartBlank = () => {
+    setQuiz({
+      title: '',
+      description: '',
+      language: 'English',
+      difficulty: 'easy',
+      questions: [ { question: '', options: ['', '', '', ''], answer: '' } ]
+    });
+    setCurrentQuestionIndex(0);
+    setShowClearModal(false);
+  };
+
+  // If URL contains ?load=<quizId> then fetch that quiz and load it into the editor
+  useEffect(() => {
+    try {
+      const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+      const loadId = params?.get('load');
+      if (!loadId) return;
+
+      const fetchAndLoad = async (id) => {
+        setLoading(true);
+        try {
+          const res = await fetch(`${baseUrl}/quizzes/${id}`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('quizToken')}` } });
+          if (!res.ok) throw new Error('Failed to fetch quiz');
+          const q = await res.json();
+          setQuiz(q);
+          setCurrentQuestionIndex(0);
+        } catch (e) {
+          console.error('Failed to load quiz from URL param:', e);
+          alert('Failed to load requested quiz');
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchAndLoad(loadId);
+    } catch (e) { /* noop */ }
+  }, []);
 
   if (loading) {
     return (
@@ -326,42 +329,29 @@ export default function QuizEditor() {
   return (
     <>
       <Navigation user={user} />
-      <div className="min-h-screen gradient-bg pt-16 pb-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="text-3xl font-bold text-white mb-2">Quiz Editor</h1>
-              <p className="text-white/80">Create and customize your own quizzes</p>
-            </div>
-            <div className="flex gap-4">
-              <button
-                onClick={importFromTemplate}
-                className="btn-secondary"
-              >
-                📝 Load from History
-              </button>
-              <button
-                onClick={previewQuiz}
-                className="btn-secondary"
-              >
-                👁️ Preview
-              </button>
-              <button
-                onClick={saveQuiz}
-                disabled={saveStatus === 'saving'}
-                className={`btn-primary ${saveStatus === 'saving' ? 'opacity-75' : ''}`}
-              >
-                {saveStatus === 'saving' ? (
-                  <div className="flex items-center gap-2">
-                    <div className="loading-spinner"></div>
-                    Saving...
-                  </div>
-                ) : (
-                  '💾 Save Quiz'
-                )}
-              </button>
-            </div>
+      <div className="min-h-screen gradient-bg pt-20 pb-16 md:pb-24 safe-bottom">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          {/* Header - unified with other pages */}
+          <div className="text-center mb-8 sm:mb-10">
+            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3 sm:mb-4 flex items-center justify-center gap-3">
+              <span>📝</span>
+              Quiz Editor
+            </h1>
+            <p className="text-white/80 text-base sm:text-lg">Create and customize your own quizzes</p>
+          </div>
+
+          {/* Actions */}
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
+            <button onClick={importFromTemplate} className="btn-secondary">📝 Load from History</button>
+            <button onClick={startFromBlank} className="btn-secondary">🧹 Start from blank</button>
+            <button onClick={previewQuiz} className="btn-secondary">👁️ Preview</button>
+            <button onClick={saveQuiz} disabled={saveStatus === 'saving'} className={`btn-primary ${saveStatus === 'saving' ? 'opacity-75' : ''}`}>
+              {saveStatus === 'saving' ? (
+                <div className="flex items-center gap-2"><div className="loading-spinner"></div>Saving...</div>
+              ) : (
+                '💾 Save Quiz'
+              )}
+            </button>
           </div>
 
           {/* Save Status */}
@@ -724,6 +714,21 @@ export default function QuizEditor() {
           </div>
         </div>
       )}
+
+      <TemplatePickerModal
+        isOpen={showTemplateModal}
+        onClose={() => setShowTemplateModal(false)}
+        onSelect={handleSelectTemplate}
+        apiBase={baseUrl}
+      />
+      <ConfirmModal
+        isOpen={showClearModal}
+        title="Start from blank?"
+        message="This will clear the current quiz in the editor. This action cannot be undone."
+        confirmText="Yes, clear"
+        onConfirm={confirmStartBlank}
+        onCancel={() => setShowClearModal(false)}
+      />
     </>
   );
 }

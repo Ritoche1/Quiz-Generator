@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import List, Dict, Optional
 from datetime import datetime
 
@@ -7,8 +7,8 @@ class QuestionSchema(BaseModel):
     options: List[str]
     answer: str
 
-    class Config:
-        orm_mode = True
+    # Pydantic v2
+    model_config = ConfigDict(from_attributes=True)
 
 class QuizCreate(BaseModel):
     title: str
@@ -16,6 +16,7 @@ class QuizCreate(BaseModel):
     language: str
     difficulty: str
     questions: List[QuestionSchema]
+    is_public: Optional[bool] = False
 
 class QuizUpdate(BaseModel):
     title: Optional[str] = None
@@ -23,6 +24,7 @@ class QuizUpdate(BaseModel):
     language: Optional[str] = None
     difficulty: Optional[str] = None
     questions: Optional[List[QuestionSchema]] = None
+    is_public: Optional[bool] = None
 
 class QuizResponse(BaseModel):
     id: int
@@ -32,6 +34,7 @@ class QuizResponse(BaseModel):
     difficulty: str
     questions: List[Dict]
     created_at: datetime
+    is_public: bool
 
-    class Config:
-        orm_mode = True
+    # Pydantic v2
+    model_config = ConfigDict(from_attributes=True)

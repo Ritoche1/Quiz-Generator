@@ -19,7 +19,7 @@ async def create_custom_quiz(
     """Create a new custom quiz"""
     quiz_data = quiz.dict()
     quiz_data["questions"] = [q.dict() for q in quiz.questions]
-    quiz_data["creator_id"] = current_user.id
+    quiz_data["owner_id"] = current_user.id  # Set owner
     return await create_quiz(db, quiz_data)
 
 @router.get("/quiz/{quiz_id}", response_model=QuizResponse)
@@ -33,8 +33,10 @@ async def get_quiz_for_editing(
     if not quiz:
         raise HTTPException(status_code=404, detail="Quiz not found")
     
-    # In a full implementation, check if user owns the quiz
-    # For now, allow access to any quiz for editing
+    # Check if user owns the quiz (if owner_id exists)
+    if hasattr(quiz, 'owner_id') and quiz.owner_id and quiz.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You can only edit quizzes you created")
+    
     return quiz
 
 @router.put("/quiz/{quiz_id}", response_model=QuizResponse)
@@ -49,8 +51,9 @@ async def update_custom_quiz(
     if not quiz:
         raise HTTPException(status_code=404, detail="Quiz not found")
     
-    # In a full implementation, check if user owns the quiz
-    # For now, allow updating any quiz
+    # Check if user owns the quiz (if owner_id exists)
+    if hasattr(quiz, 'owner_id') and quiz.owner_id and quiz.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You can only edit quizzes you created")
     
     quiz_data = quiz_update.dict(exclude_unset=True)
     if "questions" in quiz_data:
@@ -69,8 +72,9 @@ async def delete_custom_quiz(
     if not quiz:
         raise HTTPException(status_code=404, detail="Quiz not found")
     
-    # In a full implementation, check if user owns the quiz
-    # For now, allow deleting any quiz
+    # Check if user owns the quiz (if owner_id exists)
+    if hasattr(quiz, 'owner_id') and quiz.owner_id and quiz.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You can only delete quizzes you created")
     
     success = await delete_quiz(db, quiz_id)
     if not success:
@@ -84,9 +88,12 @@ async def get_my_created_quizzes(
     current_user: User = Depends(get_current_user)
 ):
     """Get all quizzes created by the current user"""
-    # In a full implementation, filter by creator_id
-    # For now, return all quizzes (mock data)
-    result = await db.execute(select(Quiz).limit(10))
+    # Filter by owner_id to show only user's own quizzes
+    result = await db.execute(
+        select(Quiz)
+        .where(Quiz.owner_id == current_user.id)
+        .order_by(Quiz.created_at.desc())
+    )
     return result.scalars().all()
 
 @router.post("/quiz/{quiz_id}/duplicate", response_model=QuizResponse)
@@ -107,7 +114,7 @@ async def duplicate_quiz(
         "language": original_quiz.language,
         "difficulty": original_quiz.difficulty,
         "questions": original_quiz.questions,
-        "creator_id": current_user.id
+        "owner_id": current_user.id
     }
     
     return await create_quiz(db, duplicate_data)

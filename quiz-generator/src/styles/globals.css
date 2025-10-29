@@ -37,18 +37,59 @@ body {
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
 }
 
+/* Main Container for Centering Content */
+.main-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 4rem); /* Account for fixed navigation (h-16 = 4rem) */
+  padding: 2rem 1rem;
+  padding-top: calc(4rem + 2rem); /* Navigation height + spacing */
+  padding-bottom: 2rem;
+}
+
+/* On medium screens and up, account for fixed footer */
+@media (min-width: 768px) {
+  .main-container {
+    min-height: calc(100vh - 4rem - 5rem); /* Navigation + Footer + safe area */
+    padding-bottom: calc(5rem + 2rem); /* Footer height + spacing */
+  }
+}
+
+@media (min-width: 640px) {
+  .main-container {
+    padding: 2rem 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .main-container {
+    padding: 2rem 2rem;
+  }
+}
+
 /* Enhanced Gradient Backgrounds */
 .gradient-bg {
   background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-middle) 50%, var(--bg-end) 100%);
   background-size: 400% 400%;
   animation: gradientShift 8s ease infinite;
-  transition: all 0.3s ease;
+  /* Avoid layout-affecting transitions to prevent slide/jump on route changes */
+  transition: background 0.3s ease, background-position 0.3s ease;
 }
 
 @keyframes gradientShift {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .gradient-bg { animation: none; }
+  .hover-lift { transition: none; }
+  .hover-glow { transition: none; }
+  /* #history-drawer { transition: none !important; } */
 }
 
 /* Dynamic States */
@@ -95,9 +136,10 @@ body {
 }
 
 .btn-secondary {
-  @apply bg-white/20 hover:bg-white/30 text-white font-medium px-4 py-2 rounded-lg;
+  @apply bg-white hover:bg-gray-50 text-black font-medium px-4 py-2 rounded-lg;
+  @apply border-2 border-black;
   @apply backdrop-blur-sm border border-white/30;
-  @apply transition-all duration-300 hover:scale-105;
+  @apply transition-all duration-300;
 }
 
 .btn-ghost {
@@ -106,11 +148,23 @@ body {
   @apply px-4 py-2 rounded-lg transition-all duration-300;
 }
 
+/* New: light variant for ghost buttons on white backgrounds */
+.btn-ghost-light {
+  @apply bg-transparent text-gray-700;
+  @apply border border-gray-300 hover:border-gray-400 hover:bg-gray-50;
+  @apply px-4 py-2 rounded-lg transition-all duration-300;
+}
+
+/* Larger touch targets on mobile */
+@media (max-width: 640px) {
+  .btn-primary, .btn-secondary, .btn-ghost, .btn-ghost-light { min-height: 44px; }
+}
+
 /* Enhanced Card Styles */
 .card {
   @apply bg-white rounded-2xl shadow-xl;
   @apply border border-gray-100;
-  @apply transition-all duration-300 hover:shadow-2xl hover:scale-105;
+  @apply transition-all duration-300 hover:shadow-2xl;
 }
 
 .card-header {
@@ -181,6 +235,40 @@ body {
   box-shadow: 0 0 30px rgba(79, 70, 229, 0.4);
 }
 
+/* Fun generating screen animations */
+.floaty {
+  position: absolute;
+  width: 14rem;
+  height: 14rem;
+  background: radial-gradient(ellipse at center, rgba(255,255,255,0.35), rgba(255,255,255,0));
+  border-radius: 9999px;
+  animation: float 8s ease-in-out infinite;
+  filter: blur(4px);
+}
+.floaty.delay-200 { animation-delay: .2s; }
+.floaty.delay-300 { animation-delay: .3s; }
+.floaty.delay-500 { animation-delay: .5s; }
+
+@keyframes float {
+  0% { transform: translateY(0) translateX(0); opacity: .8; }
+  50% { transform: translateY(-20px) translateX(10px); opacity: 1; }
+  100% { transform: translateY(0) translateX(0); opacity: .8; }
+}
+
+.shimmer {
+  animation: shimmer 1.2s ease-in-out infinite;
+}
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
+
+.bounce-slow { animation: bounceSlow 1.6s infinite; display: inline-block; }
+@keyframes bounceSlow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
 /* Quiz Specific Styles */
 .question-card {
   @apply card p-8;
@@ -194,9 +282,8 @@ body {
   @apply flex items-center gap-3;
 }
 
-.option-button:hover {
-  transform: translateX(8px);
-}
+/* Remove translateX on hover to avoid container shift */
+/* .option-button:hover { transform: translateX(8px); } */
 
 .option-button.selected {
   @apply border-indigo-500 bg-indigo-100 text-indigo-800;
@@ -210,6 +297,29 @@ body {
   @apply border-red-500 bg-red-100 text-red-800;
 }
 
+/* Safe area helpers */
+:root { 
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.safe-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+}
+/* Add top safe-area padding utility for notched devices */
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Define custom utility previously used in markup */
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
+/* Mobile drawer animation */
+#history-drawer { transition: transform 0.3s ease; }
+
+/* Prevent footer overlap by ensuring bottom padding on main containers */
+.page-shell { padding-bottom: 5rem; }
+
 /* Responsive Utilities */
 @media (max-width: 640px) {
   .card {
@@ -219,4 +329,10 @@ body {
   .glass-card {
     @apply m-4;
   }
+}
+
+/* Disable transitions/animations during route changes to avoid slide-down effects */
+html.route-changing *, html.route-changing *::before, html.route-changing *::after {
+  transition: none !important;
+  animation: none !important;
 }

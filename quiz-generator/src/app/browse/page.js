@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import Navigation from '@/components/Navigation';
+import { useRouter } from 'next/navigation';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}` : 'http://localhost:5000';
 
@@ -13,6 +13,7 @@ export default function BrowseQuizzes() {
   const [selectedDifficulty, setSelectedDifficulty] = useState('all');
   const [selectedLanguage, setSelectedLanguage] = useState('all');
   const [sortBy, setSortBy] = useState('created');
+  const router = useRouter();
 
   const languages = ['all', 'English', 'Spanish', 'French', 'German', 'Italian', 'Portuguese', 'Dutch', 'Russian', 'Japanese', 'Korean', 'Chinese', 'Arabic', 'Hindi', 'Turkish', 'Polish'];
 
@@ -48,92 +49,15 @@ export default function BrowseQuizzes() {
   const fetchQuizzes = async () => {
     try {
       const response = await fetch(`${baseUrl}/quizzes/browse/public`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
       setQuizzes(data);
     } catch (error) {
       console.error('Error fetching quizzes:', error);
-      // Fall back to mock data if API fails
-      const mockQuizzes = [
-        {
-          id: 1,
-          title: 'JavaScript Fundamentals',
-          description: 'Test your knowledge of JavaScript basics including variables, functions, and objects.',
-          difficulty: 'easy',
-          language: 'English',
-          questionsCount: 10,
-          attempts: 245,
-          avgScore: 78,
-          creator: 'CodeMaster',
-          created: new Date('2024-01-15'),
-          tags: ['programming', 'javascript', 'web development']
-        },
-        {
-          id: 2,
-          title: 'World History: Ancient Civilizations',
-          description: 'Explore the fascinating world of ancient civilizations from Egypt to Rome.',
-          difficulty: 'medium',
-          language: 'English',
-          questionsCount: 15,
-          attempts: 189,
-          avgScore: 65,
-          creator: 'HistoryBuff',
-          created: new Date('2024-01-12'),
-          tags: ['history', 'ancient', 'civilizations']
-        },
-        {
-          id: 3,
-          title: 'Advanced Mathematics',
-          description: 'Challenge yourself with complex mathematical problems and proofs.',
-          difficulty: 'hard',
-          language: 'English',
-          questionsCount: 12,
-          attempts: 98,
-          avgScore: 52,
-          creator: 'MathWizard',
-          created: new Date('2024-01-10'),
-          tags: ['mathematics', 'calculus', 'algebra']
-        },
-        {
-          id: 4,
-          title: 'Spanish Grammar Basics',
-          description: 'Master the fundamentals of Spanish grammar and sentence structure.',
-          difficulty: 'easy',
-          language: 'Spanish',
-          questionsCount: 8,
-          attempts: 156,
-          avgScore: 72,
-          creator: 'LinguaTeacher',
-          created: new Date('2024-01-08'),
-          tags: ['language', 'spanish', 'grammar']
-        },
-        {
-          id: 5,
-          title: 'Biology: Cell Structure',
-          description: 'Deep dive into cellular biology and understand the building blocks of life.',
-          difficulty: 'medium',
-          language: 'English',
-          questionsCount: 20,
-          attempts: 312,
-          avgScore: 69,
-          creator: 'BiologyPro',
-          created: new Date('2024-01-05'),
-          tags: ['biology', 'cells', 'science']
-        },
-        {
-          id: 6,
-          title: 'French Literature',
-          description: 'Explore the masterpieces of French literature from Molière to Camus.',
-          difficulty: 'hard',
-          language: 'French',
-          questionsCount: 18,
-          attempts: 76,
-          avgScore: 58,
-          creator: 'LiteratureExpert',
-          created: new Date('2024-01-03'),
-          tags: ['literature', 'french', 'culture']
-        }
-      ];
-      setQuizzes(mockQuizzes);
+      // For now, set empty array if API fails
+      setQuizzes([]);
     }
   };
 
@@ -197,9 +121,14 @@ export default function BrowseQuizzes() {
   };
 
   const handleStartQuiz = (quiz) => {
-    // For now, redirect to home with quiz data
-    // In a full implementation, we'd start the quiz directly
-    window.location.href = `/?quiz=${quiz.id}`;
+    const token = localStorage.getItem('quizToken');
+    if (!token) {
+      // Redirect unauthenticated users to login page with return path
+      const returnTo = encodeURIComponent(`/browse`);
+      router.push(`/?redirect=${returnTo}`);
+      return;
+    }
+    router.push(`/?quiz=${quiz.id}`);
   };
 
   if (loading) {
@@ -215,16 +144,15 @@ export default function BrowseQuizzes() {
 
   return (
     <>
-      <Navigation user={user} />
-      <div className="min-h-screen gradient-bg pt-16 pb-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="min-h-screen gradient-bg pt-20 pb-16 md:pb-24 safe-bottom">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           {/* Header */}
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-white mb-4 flex items-center justify-center gap-3">
+          <div className="text-center mb-8 sm:mb-12">
+            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3 sm:mb-4 flex items-center justify-center gap-3">
               <span>🎯</span>
               Browse Quizzes
             </h1>
-            <p className="text-white/80 text-lg">
+            <p className="text-white/80 text-base sm:text-lg">
               Discover and take quizzes created by the community
             </p>
           </div>
@@ -329,7 +257,7 @@ export default function BrowseQuizzes() {
                   </div>
 
                   {/* Stats */}
-                  <div className="grid grid-cols-3 gap-4 mb-4 text-center">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4 text-center">
                     <div>
                       <div className="text-lg font-bold text-indigo-600">{quiz.questionsCount}</div>
                       <div className="text-xs text-gray-500">Questions</div>

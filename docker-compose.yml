@@ -11,7 +11,8 @@ services:
       - quiz-network
       - default
     env_file:
-      - .env
+      - ./quiz-generator/.env
+      - ./quiz-generator/.env.local
 
   postgres: 
     image: postgres:15-alpine
@@ -36,7 +37,7 @@ services:
     build: ./quiz-generator-backend
     container_name: quiz-backend
     env_file:
-      - .env
+      - ./quiz-generator-backend/.env
     ports:
       - "5000:5000"
     depends_on:

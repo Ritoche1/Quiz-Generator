@@ -1,4 +1,4 @@
-from sqlalchemy import update
+from sqlalchemy import update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from database.models import Quiz
 from sqlalchemy.sql import select
@@ -30,6 +30,15 @@ async def delete_quiz(db: AsyncSession, quiz_id: int):
     quiz = await get_quiz(db, quiz_id)
     if not quiz:
         return False
+
+    # Remove dependent rows in user_scores to prevent FK violation
+    from database.models import UserScore
+    await db.execute(delete(UserScore).where(UserScore.quiz_id == quiz_id))
+
     await db.delete(quiz)
-    await db.commit()
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
     return True

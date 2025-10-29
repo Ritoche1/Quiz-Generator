@@ -9,30 +9,48 @@ jest.mock('@/components/QuizQuestion', () => () => <div data-testid="quiz-questi
 jest.mock('@/components/QuizRecap', () => () => <div data-testid="quiz-recap">QuizRecap Component</div>);
 
 describe('Home page', () => {
-  test('affiche QuizGenerator lorsque le quiz est null', () => {
-    render(<Home />);
-    expect(screen.getByTestId('quiz-generator')).toBeInTheDocument();
+  beforeEach(() => {
+    // Simule un utilisateur authentifié
+    localStorage.setItem('quizToken', 'test-token');
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ id: 'u1', email: 'test@example.com' }),
+      })
+    );
   });
 
-  test('affiche un message d\'erreur si aucun quiz n\'est reçu', () => {
+  afterEach(() => {
+    localStorage.clear();
+    jest.resetAllMocks();
+  });
+
+  test('affiche QuizGenerator lorsque le quiz est null', async () => {
     render(<Home />);
+    // Attendre que l’état auth soit mis à jour et que le composant s’affiche
+    expect(await screen.findByTestId('quiz-generator')).toBeInTheDocument();
+  });
+
+  test("affiche un message d'erreur si aucun quiz n'est reçu", async () => {
+    render(<Home />);
+    // Le message d'erreur ne doit pas être affiché par défaut
     const errorElem = screen.queryByText(/No questions found. Please try again./i);
     expect(errorElem).not.toBeInTheDocument();
   });
 
-  test('affiche QuizQuestion après génération de quiz et réponse', () => {
+  test('affiche QuizQuestion après génération de quiz et réponse', async () => {
     const fakeQuiz = {
       questions: [
         {
-          question: "Quelle est la capitale de la France ?",
-          options: ["Paris", "Lyon", "Marseille", "Toulouse"],
-          answer: "Paris"
-        }
-      ]
+          question: 'Quelle est la capitale de la France ?',
+          options: ['Paris', 'Lyon', 'Marseille', 'Toulouse'],
+          answer: 'Paris',
+        },
+      ],
     };
 
     // On passe le fakeQuiz en prop pour simuler qu'un quiz a déjà été généré.
     render(<Home initialQuiz={fakeQuiz} />);
-    expect(screen.getByTestId('quiz-question')).toBeInTheDocument();
+    expect(await screen.findByTestId('quiz-question')).toBeInTheDocument();
   });
 });

@@ -7,13 +7,18 @@ async def save_generated_quiz(
     difficulty: str,
     language: str,
     questions: list,
-    db
+    db,
+    owner_id: int,
+    is_public: bool = False,
 ):
     quiz_data = {
-        "title": f"{topic} Quiz",
+        "title": topic,
         "description": f"Auto-generated {difficulty} quiz about {topic}",
         "language": language,
+        "difficulty": difficulty,
         "questions": questions,
+        "owner_id": owner_id,
+        "is_public": is_public,
         "created_at": datetime.now(),
         "updated_at": datetime.now()
     }

@@ -1,6 +1,5 @@
 'use client';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 export default function AuthForm({onLogin}) {
     const [isLogin, setIsLogin] = useState(true);
@@ -8,7 +7,7 @@ export default function AuthForm({onLogin}) {
     const [password, setPassword] = useState('');
     const [username, setUsername] = useState('');
     const [error, setError] = useState('');
-    const router = useRouter();
+    // Removed useRouter to keep component test-friendly
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -37,8 +36,9 @@ export default function AuthForm({onLogin}) {
 
             if (isLogin) {
                 localStorage.setItem('quizToken', data.access_token);
-                router.refresh();
-                onLogin();
+                // Notify app shell and parent without full reload
+                try { onLogin?.(); } catch {}
+                try { window.dispatchEvent(new CustomEvent('auth-login')); } catch {}
             } else {
                 setIsLogin(true); // Switch to login after successful registration
             }
@@ -48,17 +48,17 @@ export default function AuthForm({onLogin}) {
     };
 
     return (
-        <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-lg text-black">
-            <div className="flex gap-4 mb-6">
+        <div className="w-full max-w-md glass-card p-6 rounded-2xl text-black">
+            <div className="flex gap-3 mb-6">
                 <button 
                     onClick={() => setIsLogin(true)}
-                    className={`flex-1 p-2 ${isLogin ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+                    className={`flex-1 px-4 py-2 rounded-lg ${isLogin ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
                 >
                     Login
                 </button>
                 <button 
                     onClick={() => setIsLogin(false)}
-                    className={`flex-1 p-2 ${!isLogin ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+                    className={`flex-1 px-4 py-2 rounded-lg ${!isLogin ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
                 >
                     Register
                 </button>
@@ -71,7 +71,7 @@ export default function AuthForm({onLogin}) {
                         placeholder="Username"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
-                        className="w-full p-2 border rounded-lg"
+                        className="form-input"
                         required
                     />
                 )}
@@ -80,7 +80,7 @@ export default function AuthForm({onLogin}) {
                     placeholder="Email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full p-2 border rounded-lg"
+                    className="form-input"
                     required
                 />
                 <input
@@ -88,13 +88,13 @@ export default function AuthForm({onLogin}) {
                     placeholder="Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full p-2 border rounded-lg"
+                    className="form-input"
                     required
                 />
                 {error && <p className="text-red-500">{error}</p>}
                 <button
                     type="submit"
-                    className="w-full bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700"
+                    className="w-full btn-primary"
                 >
                     {isLogin ? 'Login' : 'Register'}
                 </button>

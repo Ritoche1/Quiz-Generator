@@ -1,7 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Navigation from '@/components/Navigation';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}` : 'http://localhost:5000';
 
@@ -143,16 +142,15 @@ export default function Leaderboard() {
 
   return (
     <>
-      <Navigation user={user} />
-      <div className="min-h-screen gradient-bg pt-16 pb-8">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="min-h-screen gradient-bg pt-20 pb-16 md:pb-24 safe-bottom">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           {/* Header */}
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-white mb-4 flex items-center justify-center gap-3">
+          <div className="text-center mb-8 sm:mb-12">
+            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3 sm:mb-4 flex items-center justify-center gap-3">
               <span>🏆</span>
               Leaderboard
             </h1>
-            <p className="text-white/80 text-lg">
+            <p className="text-white/80 text-base sm:text-lg">
               Compete with quiz masters from around the world
             </p>
           </div>
@@ -187,10 +185,10 @@ export default function Leaderboard() {
                   <button
                     key={difficulty}
                     onClick={() => setSelectedDifficulty(difficulty)}
-                    className={`px-6 py-3 rounded-lg font-medium transition-all duration-300 flex items-center gap-2 ${
+                    className={`px-6 py-3 rounded-lg font-medium flex items-center gap-2 ${
                       selectedDifficulty === difficulty
                         ? 'bg-white text-gray-800 shadow-lg'
-                        : 'text-white hover:bg-white/10'
+                        : 'text-white'
                     }`}
                   >
                     <span>{getDifficultyIcon(difficulty)}</span>
@@ -233,7 +231,7 @@ export default function Leaderboard() {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {leaderboardData[selectedDifficulty].map((player, index) => (
-                    <tr key={index} className="hover:bg-gray-50 transition-colors">
+                    <tr key={index}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <span className="text-2xl mr-2">{getRankIcon(index + 1)}</span>

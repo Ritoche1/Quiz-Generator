@@ -13,6 +13,8 @@ class Quiz(Base):
     language = Column(String(255))
     questions = Column(JSON)
     difficulty = Column(String(255))
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # Added owner field
+    is_public = Column(Boolean, nullable=False, server_default='0')  # New: public flag for browsing
     created_at = Column(
         TIMESTAMP,
         server_default=func.now(),
