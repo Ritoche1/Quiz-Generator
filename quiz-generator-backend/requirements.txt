@@ -4,8 +4,10 @@ mistralai
 python-dotenv
 asyncpg
 sqlalchemy
-bcrypt
+bcrypt>=4.1.2,<5
 python-jose[cryptography]
 python-multipart
 passlib
 aiosqlite
+email-validator
+aiosmtplib

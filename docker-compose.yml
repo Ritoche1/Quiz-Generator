@@ -1,12 +1,15 @@
 services:
   frontend:
-    build: ./quiz-generator
-    ports:
-      - '83:83'
+    container_name: quiz-frontend
+    build:
+      context: ./quiz-generator
+      args:
+        NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL}
     depends_on:
       - backend
     networks:
       - quiz-network
+      - default
     env_file:
       - ./quiz-generator/.env
       - ./quiz-generator/.env.local
@@ -42,11 +45,15 @@ services:
         condition: service_healthy
     networks:
       - quiz-network
+      - default
     restart: always
 
 networks:
   quiz-network:
     driver: bridge
+  default:
+    external: true
+    name: nginx-network
 
 volumes:
   postgres_data:

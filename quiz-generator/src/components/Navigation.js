@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}` : 'http://localhost:5000';
 
-function NavigationImpl({ user, onRedoQuiz, onNewQuiz }) {
+export default function Navigation({ user, onRedoQuiz = () => {}, onNewQuiz = () => {} }) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [quizHistory, setQuizHistory] = useState([]);
     const [loadingHistory, setLoadingHistory] = useState(true);

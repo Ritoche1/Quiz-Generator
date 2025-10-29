@@ -98,6 +98,15 @@ export default function AuthForm({onLogin}) {
                 >
                     {isLogin ? 'Login' : 'Register'}
                 </button>
+                {isLogin && (
+                    <button
+                        type="button"
+                        onClick={() => router.push('/reset-password')}
+                        className="w-full text-sm text-blue-600 hover:underline"
+                    >
+                        Forgot your password?
+                    </button>
+                )}
             </form>
         </div>
     );
