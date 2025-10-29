@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import select, update
+from sqlalchemy import select, update, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.models import PasswordResetToken, User
@@ -48,3 +48,4 @@ async def create_password_reset_token(db: AsyncSession, user_id: int, token: str
 async def get_password_reset_token(db: AsyncSession, token: str):
     result = await db.execute(select(PasswordResetToken).filter(PasswordResetToken.token == token))
     return result.scalars().first()
+

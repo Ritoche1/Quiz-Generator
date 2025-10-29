@@ -6,7 +6,7 @@ from database.models import User
 from app.routers.auth import get_current_user
 from schemas.score import FriendshipCreate, FriendshipUpdateStatus
 from schemas.friend import UserLite, FriendshipResponse, FriendListItem, PendingRequestItem, OutgoingRequestItem
-from crud.user_crud import (
+from crud.friend_crud import (
     create_friend_request,
     update_friend_request_status,
     delete_friendship,
