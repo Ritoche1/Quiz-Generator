@@ -3,15 +3,10 @@ import AppShell from "@/components/AppShell";
 
 export const metadata = {
   title: "Quiz Generator",
-  description: "Making by heart by Ritoche1",
-  icons: {
-    icon: [
-      '/favicon.ico'
-    ],
-  },
+  description: "Generate AI-powered quizzes on any topic",
+  icons: { icon: ['/favicon.ico'] },
 };
 
-// Use Next.js App Router viewport API instead of a manual <meta> tag
 export const viewport = {
   width: 'device-width',
   initialScale: 1,
@@ -21,7 +16,12 @@ export const viewport = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className="antialiased min-h-screen">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+      </head>
+      <body className="antialiased min-h-screen bg-background">
         <AppShell>
           {children}
         </AppShell>

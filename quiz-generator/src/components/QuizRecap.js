@@ -7,100 +7,92 @@ import { generateReportPDF, generateWorksheetPDF } from '@/lib/pdf';
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL.replace(/\/$/, '')}` : 'http://localhost:5000';
 const apiBase = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`;
 
+function ScoreRing({ percentage }) {
+  const radius = 45;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (percentage / 100) * circumference;
+  const color = percentage >= 80 ? '#059669' : percentage >= 50 ? '#D97706' : '#DC2626';
+
+  return (
+    <div className="relative w-32 h-32 mx-auto">
+      <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r={radius} fill="none" stroke="#E5E7EB" strokeWidth="8" />
+        <circle
+          cx="50" cy="50" r={radius} fill="none" stroke={color} strokeWidth="8"
+          strokeLinecap="round"
+          className="score-ring-animated"
+          style={{
+            strokeDasharray: circumference,
+            '--circumference': circumference,
+            '--target-offset': offset,
+            strokeDashoffset: circumference,
+          }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="text-3xl font-bold text-gray-900">{percentage}%</span>
+      </div>
+    </div>
+  );
+}
+
 export default function QuizRecap({ quiz, selectedAnswers, onRestart }) {
   const didMountRef = useRef(false);
   const [showingReport, setShowingReport] = useState(false);
   const [generateStatus, setGenerateStatus] = useState('');
   const [globalStats, setGlobalStats] = useState(null);
   const [attemptsCount, setAttemptsCount] = useState(null);
-  const [statsLoading, setStatsLoading] = useState(false);
 
   const calculateScore = () => {
     let score = 0;
-    quiz.questions.forEach((question, index) => {
-      if (selectedAnswers[index] === question.answer) {
-        score++;
-      }
-    });
+    quiz.questions.forEach((q, i) => { if (selectedAnswers[i] === q.answer) score++; });
     return score;
   };
 
-  const getScorePercentage = () => {
-    return Math.round((calculateScore() / quiz.questions.length) * 100);
-  };
+  const score = calculateScore();
+  const total = quiz.questions.length;
+  const percentage = Math.round((score / total) * 100);
 
-  const getPerformanceColor = () => {
-    const percentage = getScorePercentage();
-    if (percentage >= 90) return 'text-green-600';
-    if (percentage >= 80) return 'text-green-600';
-    if (percentage >= 60) return 'text-yellow-600';
-    return 'text-red-600';
-  };
-
-  const getPerformanceMessage = () => {
-    const percentage = getScorePercentage();
-    if (percentage >= 90) return '🎉 Excellent! Outstanding performance!';
-    if (percentage >= 80) return '👏 Great job! Well done!';
-    if (percentage >= 60) return '👍 Good work! Keep it up!';
-    if (percentage >= 40) return '💪 Not bad! Room for improvement!';
-    return '📚 Keep studying! You can do better!';
+  const getMessage = () => {
+    if (percentage >= 90) return 'Outstanding!';
+    if (percentage >= 70) return 'Great job!';
+    if (percentage >= 50) return 'Good effort!';
+    return 'Keep learning!';
   };
 
   const generateQuizReport = async () => {
     setGenerateStatus('generating');
-    try {
-      await generateReportPDF(quiz, selectedAnswers);
-      setGenerateStatus('success');
-      setTimeout(() => setGenerateStatus(''), 3000);
-    } catch (error) {
-      setGenerateStatus('error');
-      setTimeout(() => setGenerateStatus(''), 3000);
-      console.error('Error generating PDF report:', error);
-    }
+    try { await generateReportPDF(quiz, selectedAnswers); setGenerateStatus(''); }
+    catch { setGenerateStatus('error'); setTimeout(() => setGenerateStatus(''), 3000); }
   };
 
   const generateEmptyQuiz = async () => {
     setGenerateStatus('generating-empty');
-    try {
-      await generateWorksheetPDF(quiz);
-      setGenerateStatus('success');
-      setTimeout(() => setGenerateStatus(''), 3000);
-    } catch (error) {
-      setGenerateStatus('error');
-      setTimeout(() => setGenerateStatus(''), 3000);
-      console.error('Error generating empty quiz PDF:', error);
-    }
+    try { await generateWorksheetPDF(quiz); setGenerateStatus(''); }
+    catch { setGenerateStatus('error'); setTimeout(() => setGenerateStatus(''), 3000); }
+  };
+
+  const handleShare = () => {
+    const url = `${window.location.origin}/?quiz=${quiz.id}`;
+    navigator.clipboard.writeText(url).catch(() => {});
   };
 
   useEffect(() => {
     if (didMountRef.current) return;
     didMountRef.current = true;
-    // No DB writes here anymore; quiz already saved on generation and attempt updated progressively
   }, []);
 
   useEffect(() => {
     let mounted = true;
     const fetchStats = async () => {
-      setStatsLoading(true);
       try {
         const res = await fetch(`${apiBase}/quizzes/stats/global`);
-        if (res.ok) {
-          const data = await res.json();
-          if (mounted) setGlobalStats(data);
-        }
-
-        if (quiz && quiz.id) {
+        if (res.ok && mounted) setGlobalStats(await res.json());
+        if (quiz?.id) {
           const r2 = await fetch(`${apiBase}/quizzes/${quiz.id}/scores/count`);
-          if (r2.ok) {
-            const d2 = await r2.json();
-            if (mounted) setAttemptsCount(d2.attempts ?? d2.count ?? 0);
-          }
+          if (r2.ok && mounted) { const d = await r2.json(); setAttemptsCount(d.attempts ?? d.count ?? 0); }
         }
-      } catch (e) {
-        console.error('Failed to fetch stats', e);
-      } finally {
-        if (mounted) setStatsLoading(false);
-      }
+      } catch {}
     };
     fetchStats();
     return () => { mounted = false; };
@@ -108,211 +100,135 @@ export default function QuizRecap({ quiz, selectedAnswers, onRestart }) {
 
   if (showingReport) {
     return (
-      <div className="w-full max-w-4xl glass-card p-8 rounded-2xl" role="region" aria-labelledby="detailed-report-heading">
-        <div className="text-center mb-8">
-          <h2 id="detailed-report-heading" className="text-3xl font-extrabold text-gray-900 mb-4">📊 Detailed Report</h2>
-          <button
-            onClick={() => setShowingReport(false)}
-            className="btn-secondary mb-6 text-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            aria-label="Back to summary"
-          >
-            ← Back to Summary
-          </button>
-        </div>
-
-        <div className="space-y-6">
-          {quiz.questions.map((question, index) => {
-            const isCorrect = selectedAnswers[index] === question.answer;
-            return (
-              <div
-                key={index}
-                className={`p-6 rounded-xl border-l-4 ${
-                  isCorrect 
-                    ? 'border-green-500 bg-green-50' 
-                    : 'border-red-500 bg-red-50'
-                }`}
-                role="group"
-                aria-labelledby={`question-${index}-title`}
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <h4 id={`question-${index}-title`} className="text-lg font-semibold text-gray-900">
-                    Question {index + 1}
-                  </h4>
-                  <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    isCorrect 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-red-100 text-red-800'
-                  }`} aria-hidden="true">
-                    {isCorrect ? '✓' : '✗'}
-                  </div>
-                </div>
-                
-                <p className="text-gray-800 mb-4 font-medium">{question.question}</p>
-                
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3">
-                    <span className="font-medium text-gray-700">Your answer:</span>
-                    <span className={`font-semibold ${
-                      isCorrect ? 'text-green-700' : 'text-red-700'
-                    }`}>
-                      {selectedAnswers[index] || 'No answer provided'}
+      <div className="w-full max-w-3xl mx-auto">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sm:p-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-gray-900">Detailed Breakdown</h2>
+            <button onClick={() => setShowingReport(false)} className="text-sm text-indigo-600 hover:underline font-medium">
+              Back to summary
+            </button>
+          </div>
+          <div className="space-y-4">
+            {quiz.questions.map((q, i) => {
+              const correct = selectedAnswers[i] === q.answer;
+              return (
+                <div key={i} className={`p-5 rounded-xl border-l-4 ${correct ? 'border-emerald-500 bg-emerald-50/50' : 'border-red-500 bg-red-50/50'}`}>
+                  <div className="flex items-start justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-500">Question {i + 1}</span>
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${correct ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                      {correct ? 'Correct' : 'Incorrect'}
                     </span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="font-medium text-gray-700">Correct answer:</span>
-                    <span className="font-semibold text-green-700">
-                      {question.answer}
-                    </span>
+                  <p className="font-medium text-gray-900 mb-3">{q.question}</p>
+                  <div className="space-y-1.5 text-sm">
+                    <div className="flex gap-2">
+                      <span className="text-gray-500">Your answer:</span>
+                      <span className={correct ? 'text-emerald-700 font-medium' : 'text-red-700 font-medium'}>
+                        {selectedAnswers[i] || 'No answer'}
+                      </span>
+                    </div>
+                    {!correct && (
+                      <div className="flex gap-2">
+                        <span className="text-gray-500">Correct:</span>
+                        <span className="text-emerald-700 font-medium">{q.answer}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-2xl glass-card p-8 rounded-2xl" role="region" aria-labelledby="recap-heading">
-      {/* Status Messages */}
-      {generateStatus && (
-        <div role="status" aria-live="polite" aria-atomic="true" className={`p-4 rounded-lg mb-6 ${
-          generateStatus.includes('success') ? 'bg-green-100 text-green-800' :
-          generateStatus.includes('error') ? 'bg-red-100 text-red-800' :
-          'bg-blue-100 text-blue-800'
-        }`}>
-          {generateStatus === 'generating' && '📄 Generating PDF report...'}
-          {generateStatus === 'generating-empty' && '📝 Generating PDF worksheet...'}
-          {generateStatus === 'success' && '✅ PDF downloaded successfully!'}
-          {generateStatus === 'error' && '❌ Error generating PDF. Please try again.'}
-        </div>
-      )}
-
-      <div className="text-center mb-8">
-        <h2 id="recap-heading" className="text-3xl font-extrabold text-gray-900 mb-2">Quiz Complete!</h2>
-        <div className={`inline-flex items-center justify-center rounded-full p-6 mb-4 bg-white shadow-sm`}>
-          <div className={`text-6xl font-extrabold ${getPerformanceColor()}`} aria-label={`Score percentage ${getScorePercentage()} percent`}>
-            <span className="sr-only">Score percentage:</span>
-            {getScorePercentage()}%
-          </div>
-        </div>
-        <p className="text-xl text-gray-800 mb-2" aria-live="polite">{getPerformanceMessage()}</p>
-        <p className="text-gray-800">
-          You scored <span className="font-bold text-indigo-600">{calculateScore()}</span> out of <span className="font-bold">{quiz.questions.length}</span> questions
-        </p>
-      </div>
-
-      {/* Quiz Statistics */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <div className="text-center p-4 bg-gray-50 rounded-xl">
-          <div className="text-2xl font-bold text-green-700">{calculateScore()}</div>
-          <div className="text-sm text-gray-700">Correct</div>
-        </div>
-        <div className="text-center p-4 bg-gray-50 rounded-xl">
-          <div className="text-2xl font-bold text-red-700">{quiz.questions.length - calculateScore()}</div>
-          <div className="text-sm text-gray-700">Incorrect</div>
-        </div>
-        <div className="text-center p-4 bg-gray-50 rounded-xl">
-          <div className="text-2xl font-bold text-blue-700">{quiz.questions.length}</div>
-          <div className="text-sm text-gray-700">Total</div>
-        </div>
-      </div>
-
-      {/* Global / Quiz attempts stats */}
-      <div className="mb-6">
-        <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 text-sm text-gray-700">
-          <div className="p-3 bg-gray-50 rounded-lg text-center w-36">
-            <div className="text-lg font-bold text-indigo-600">{statsLoading ? '—' : (attemptsCount ?? '—')}</div>
-            <div className="text-xs">This quiz attempts</div>
-          </div>
-          <div className="p-3 bg-gray-50 rounded-lg text-center w-36">
-            <div className="text-lg font-bold text-indigo-600">{globalStats?.total_quizzes ?? '—'}</div>
-            <div className="text-xs">Total quizzes</div>
-          </div>
-          <div className="p-3 bg-gray-50 rounded-lg text-center w-36">
-            <div className="text-lg font-bold text-indigo-600">{globalStats?.total_attempts ?? '—'}</div>
-            <div className="text-xs">Total attempts</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <button
-            onClick={() => setShowingReport(true)}
-            className="flex-1 btn-secondary flex items-center justify-center gap-2 text-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            aria-label="View detailed report"
-          >
-            <span aria-hidden="true">📊</span>
-            <span className="text-sm text-black">View Detailed Report</span>
-          </button>
-          <button
-            onClick={generateQuizReport}
-            disabled={generateStatus === 'generating'}
-            className="flex-1 btn-primary flex items-center justify-center gap-2 text-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            aria-label="Download PDF report"
-          >
-            {generateStatus === 'generating' ? (
-              <>
-                <div className="loading-spinner" aria-hidden="true"></div>
-                <span>Generating...</span>
-              </>
-            ) : (
-              <>
-                <span aria-hidden="true">📄</span>
-                <span>Download PDF Report</span>
-              </>
-            )}
-          </button>
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-4">
-          <button
-            onClick={generateEmptyQuiz}
-            disabled={generateStatus === 'generating-empty'}
-            className="flex-1 btn-secondary flex items-center justify-center gap-2 bg-white text-black border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            aria-label="Print PDF worksheet"
-          >
-            {generateStatus === 'generating-empty' ? (
-              <>
-                <div className="loading-spinner" aria-hidden="true"></div>
-                <span className="text-sm text-black">Generating...</span>
-              </>
-            ) : (
-              <>
-                <span aria-hidden="true">📝</span>
-                <span className="text-sm text-black">Print PDF Worksheet</span>
-              </>
-            )}
-          </button>
-          <button
-            onClick={onRestart}
-            className="flex-1 btn-ghost flex items-center justify-center gap-2 bg-white text-black border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            aria-label="Start over"
-          >
-            <span aria-hidden="true">🔄</span>
-            <span className="text-sm text-black">Start Over</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Quiz Info */}
-      <div className="mt-8 pt-6 border-t border-gray-200">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-700">
-          <div>
-            <span className="font-medium">Difficulty:</span> {quiz.difficulty.charAt(0).toUpperCase() + quiz.difficulty.slice(1)}
-          </div>
-          <div>
-            <span className="font-medium">Language:</span> {quiz.language}
-          </div>
-        </div>
-        <div className="text-center mt-4">
-          <p className="text-xs text-gray-600">
-            Want to try more quizzes? <Link href="/browse" className="text-indigo-600 hover:text-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Browse all quizzes</Link>
+    <div className="w-full max-w-xl mx-auto">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sm:p-8">
+        {/* Score ring */}
+        <div className="text-center mb-8">
+          <ScoreRing percentage={percentage} />
+          <h2 className="text-2xl font-bold text-gray-900 mt-4">{getMessage()}</h2>
+          <p className="text-gray-500 mt-1">
+            You got <span className="font-semibold text-gray-900">{score}</span> out of <span className="font-semibold text-gray-900">{total}</span> correct
           </p>
         </div>
+
+        {/* Stats grid */}
+        <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="text-center p-3 bg-emerald-50 rounded-xl">
+            <div className="text-xl font-bold text-emerald-700">{score}</div>
+            <div className="text-xs text-emerald-600">Correct</div>
+          </div>
+          <div className="text-center p-3 bg-red-50 rounded-xl">
+            <div className="text-xl font-bold text-red-700">{total - score}</div>
+            <div className="text-xs text-red-600">Incorrect</div>
+          </div>
+          <div className="text-center p-3 bg-gray-50 rounded-xl">
+            <div className="text-xl font-bold text-gray-700">{attemptsCount ?? '-'}</div>
+            <div className="text-xs text-gray-500">Attempts</div>
+          </div>
+        </div>
+
+        {/* Quiz info */}
+        <div className="flex items-center justify-center gap-4 mb-8 text-sm text-gray-500">
+          <span className="capitalize">{quiz.difficulty}</span>
+          <span className="w-1 h-1 rounded-full bg-gray-300" />
+          <span>{quiz.language}</span>
+        </div>
+
+        {/* Actions */}
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => setShowingReport(true)}
+              className="py-2.5 px-4 text-sm font-medium rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              View Breakdown
+            </button>
+            <button
+              onClick={handleShare}
+              className="py-2.5 px-4 text-sm font-medium rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              Share Quiz
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={generateQuizReport}
+              disabled={generateStatus === 'generating'}
+              className="py-2.5 px-4 text-sm font-medium rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
+              {generateStatus === 'generating' ? 'Generating...' : 'PDF Report'}
+            </button>
+            <button
+              onClick={generateEmptyQuiz}
+              disabled={generateStatus === 'generating-empty'}
+              className="py-2.5 px-4 text-sm font-medium rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
+              {generateStatus === 'generating-empty' ? 'Generating...' : 'PDF Worksheet'}
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={onRestart}
+              className="py-2.5 px-4 text-sm font-medium rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+            >
+              New Quiz
+            </button>
+            <Link
+              href="/browse"
+              className="py-2.5 px-4 text-sm font-medium rounded-xl border border-indigo-300 text-indigo-700 hover:bg-indigo-50 transition-colors text-center"
+            >
+              Browse More
+            </Link>
+          </div>
+        </div>
+
+        {generateStatus === 'error' && (
+          <p className="text-sm text-red-600 text-center mt-3">Failed to generate PDF. Please try again.</p>
+        )}
       </div>
     </div>
   );

@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import Navigation from './Navigation';
 import Footer from './Footer';
+import { ToastProvider } from './ui/Toast';
 import { usePathname } from 'next/navigation';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}` : 'http://localhost:5000';
@@ -23,9 +24,7 @@ export default function AppShell({ children }) {
     }
   };
 
-  useEffect(() => {
-    fetchMe();
-  }, []);
+  useEffect(() => { fetchMe(); }, []);
 
   useEffect(() => {
     const onLogin = () => fetchMe();
@@ -38,7 +37,6 @@ export default function AppShell({ children }) {
     };
   }, []);
 
-  // Temporarily disable transitions/animations on route change to prevent slide effects
   useEffect(() => {
     if (typeof document === 'undefined') return;
     const root = document.documentElement;
@@ -48,10 +46,14 @@ export default function AppShell({ children }) {
   }, [pathname]);
 
   return (
-    <>
-      <Navigation user={user} />
-      {children}
-      <Footer />
-    </>
+    <ToastProvider>
+      <div className="min-h-screen flex flex-col">
+        <Navigation user={user} />
+        <main className="flex-1 pt-16">
+          {children}
+        </main>
+        <Footer />
+      </div>
+    </ToastProvider>
   );
 }

@@ -22,48 +22,50 @@ async def create_new_quiz(quiz: QuizCreate, db: AsyncSession = Depends(get_db), 
     # Honor provided is_public or default False from schema/DB; do not force True
     return await create_quiz(db, quiz_data)
 
-@router.put("/{quiz_id}", response_model=QuizResponse)
-async def update_quiz_endpoint(
-    quiz_id: int,
-    quiz_update: QuizUpdate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    quiz = await get_quiz(db, quiz_id)
-    if not quiz:
-        raise HTTPException(status_code=404, detail="Quiz not found")
-    
-    if quiz.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to update this quiz")
-
-    update_data = quiz_update.model_dump(exclude_unset=True)
-    
-    updated_quiz = await update_quiz(db, quiz_id, update_data)
-    return updated_quiz
-
 @router.get("/", response_model=List[QuizResponse])
 async def fetch_all_quizzes(db: AsyncSession = Depends(get_db)):
     return await get_all_quizzes(db)
-
-@router.get("/{quiz_id}", response_model=QuizResponse)
-async def get_single_quiz(quiz_id: int, db: AsyncSession = Depends(get_db)):
-    quiz = await get_quiz(db, quiz_id)
-    if not quiz:
-        raise HTTPException(status_code=404, detail="Quiz not found")
-    return quiz
 
 @router.get("/count")
 async def get_quiz_count(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(func.count(Quiz.id)))
     return {"count": result.scalar()}
 
-@router.get("/{quiz_id}/scores/count")
-async def get_quiz_attempts(quiz_id: int, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
-        select(func.count(UserScore.id))
-        .where(UserScore.quiz_id == quiz_id)
+@router.get("/stats/global")
+async def get_global_stats(db: AsyncSession = Depends(get_db)):
+    """Get global platform statistics"""
+    # Total quizzes
+    quiz_count = await db.execute(select(func.count(Quiz.id)))
+    total_quizzes = quiz_count.scalar()
+
+    # Total users
+    user_count = await db.execute(select(func.count(User.id)))
+    total_users = user_count.scalar()
+
+    # Average score
+    score_avg = await db.execute(
+        select(func.avg(UserScore.score / UserScore.max_score * 100))
     )
-    return {"attempts": result.scalar()}
+    avg_score = int(score_avg.scalar() or 0)
+
+    # Most popular topic (most attempted quiz title)
+    popular_topic = await db.execute(
+        select(Quiz.title, func.count(UserScore.id).label('attempts'))
+        .join(UserScore, Quiz.id == UserScore.quiz_id)
+        .group_by(Quiz.title)
+        .order_by(func.count(UserScore.id).desc())
+        .limit(1)
+    )
+
+    top_topic = popular_topic.first()
+    popular_topic_name = top_topic.title if top_topic else "JavaScript Fundamentals"
+
+    return {
+        "totalQuizzes": total_quizzes,
+        "totalUsers": total_users,
+        "avgScore": avg_score,
+        "topicOfTheWeek": popular_topic_name
+    }
 
 # Leaderboard endpoints
 @router.get("/leaderboard/{difficulty}")
@@ -84,7 +86,7 @@ async def get_leaderboard_by_difficulty(difficulty: str, db: AsyncSession = Depe
         .order_by(func.max(UserScore.score).desc())
         .limit(10)
     )
-    
+
     leaderboard = []
     for row in result:
         leaderboard.append({
@@ -93,44 +95,8 @@ async def get_leaderboard_by_difficulty(difficulty: str, db: AsyncSession = Depe
             "avgScore": int((row.avg_score / row.max_score) * 100) if row.max_score else 0,
             "totalQuizzes": row.total_quizzes
         })
-    
-    return leaderboard
 
-@router.get("/stats/global")
-async def get_global_stats(db: AsyncSession = Depends(get_db)):
-    """Get global platform statistics"""
-    # Total quizzes
-    quiz_count = await db.execute(select(func.count(Quiz.id)))
-    total_quizzes = quiz_count.scalar()
-    
-    # Total users
-    user_count = await db.execute(select(func.count(User.id)))
-    total_users = user_count.scalar()
-    
-    # Average score
-    score_avg = await db.execute(
-        select(func.avg(UserScore.score / UserScore.max_score * 100))
-    )
-    avg_score = int(score_avg.scalar() or 0)
-    
-    # Most popular topic (most attempted quiz title)
-    popular_topic = await db.execute(
-        select(Quiz.title, func.count(UserScore.id).label('attempts'))
-        .join(UserScore, Quiz.id == UserScore.quiz_id)
-        .group_by(Quiz.title)
-        .order_by(func.count(UserScore.id).desc())
-        .limit(1)
-    )
-    
-    top_topic = popular_topic.first()
-    popular_topic_name = top_topic.title if top_topic else "JavaScript Fundamentals"
-    
-    return {
-        "totalQuizzes": total_quizzes,
-        "totalUsers": total_users,
-        "avgScore": avg_score,
-        "topicOfTheWeek": popular_topic_name
-    }
+    return leaderboard
 
 # Browse quizzes with filtering
 @router.get("/browse/public")
@@ -227,6 +193,64 @@ async def browse_public_quizzes(
         })
 
     return enhanced_quizzes
+
+@router.get("/user/created")
+async def get_user_created_quizzes(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get quizzes created by the current user"""
+    result = await db.execute(
+        select(Quiz)
+        .where(Quiz.owner_id == current_user.id)
+        .order_by(Quiz.created_at.desc())
+    )
+    quizzes = result.scalars().all()
+    return [{
+        "id": q.id,
+        "title": q.title,
+        "description": q.description,
+        "difficulty": q.difficulty,
+        "language": q.language,
+        "questions": q.questions,
+        "is_public": q.is_public,
+        "created_at": q.created_at
+    } for q in quizzes]
+
+# Parameterized routes MUST come after all static routes
+@router.get("/{quiz_id}", response_model=QuizResponse)
+async def get_single_quiz(quiz_id: int, db: AsyncSession = Depends(get_db)):
+    quiz = await get_quiz(db, quiz_id)
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+    return quiz
+
+@router.put("/{quiz_id}", response_model=QuizResponse)
+async def update_quiz_endpoint(
+    quiz_id: int,
+    quiz_update: QuizUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    quiz = await get_quiz(db, quiz_id)
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+
+    if quiz.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to update this quiz")
+
+    update_data = quiz_update.model_dump(exclude_unset=True)
+
+    updated_quiz = await update_quiz(db, quiz_id, update_data)
+    return updated_quiz
+
+@router.get("/{quiz_id}/scores/count")
+async def get_quiz_attempts(quiz_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(func.count(UserScore.id))
+        .where(UserScore.quiz_id == quiz_id)
+    )
+    return {"attempts": result.scalar()}
 
 @router.delete("/{quiz_id}")
 async def delete_quiz_endpoint(

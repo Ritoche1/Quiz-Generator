@@ -3,15 +3,24 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import GeneratingScreen from './GeneratingScreen';
-import ConfirmModal from './ConfirmModal';
+import Modal from './ui/Modal';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}` : 'http://localhost:5000';
+
+const DIFFICULTIES = [
+  { value: 'easy', label: 'Easy', color: 'border-emerald-300 bg-emerald-50 text-emerald-700', activeColor: 'border-emerald-500 bg-emerald-100 ring-2 ring-emerald-200' },
+  { value: 'medium', label: 'Medium', color: 'border-amber-300 bg-amber-50 text-amber-700', activeColor: 'border-amber-500 bg-amber-100 ring-2 ring-amber-200' },
+  { value: 'hard', label: 'Hard', color: 'border-red-300 bg-red-50 text-red-700', activeColor: 'border-red-500 bg-red-100 ring-2 ring-red-200' },
+];
+
+const QUESTION_COUNTS = [5, 10, 15, 20];
 
 export default function QuizGenerator({ onGenerate }) {
   const languages = ['English', 'Spanish', 'French', 'German', 'Italian', 'Portuguese', 'Dutch', 'Russian', 'Japanese', 'Korean', 'Chinese', 'Arabic', 'Hindi', 'Turkish', 'Polish'];
   const [topic, setTopic] = useState('');
   const [language, setLanguage] = useState(languages[0]);
   const [difficulty, setDifficulty] = useState('easy');
+  const [questionCount, setQuestionCount] = useState(10);
   const [loading, setLoading] = useState(false);
   const [abortCtrl, setAbortCtrl] = useState(null);
   const [recentTopics, setRecentTopics] = useState([]);
@@ -21,7 +30,7 @@ export default function QuizGenerator({ onGenerate }) {
   const [showNoQuotaModal, setShowNoQuotaModal] = useState(false);
 
   const suggestions = useMemo(() => (
-    ['World History', 'JavaScript Basics', 'Photosynthesis', 'French Verbs', 'US Geography', 'Data Structures']
+    ['World History', 'JavaScript Basics', 'Photosynthesis', 'French Verbs', 'US Geography', 'Data Structures', 'Space Exploration', 'Human Biology']
   ), []);
 
   useEffect(() => {
@@ -38,9 +47,8 @@ export default function QuizGenerator({ onGenerate }) {
       if (!res.ok) throw new Error('Failed');
       const data = await res.json();
       setRemaining(data.remaining);
-    } catch (e) {
-      setRemaining(null);
-    } finally { setLimitInfoLoading(false); }
+    } catch { setRemaining(null); }
+    finally { setLimitInfoLoading(false); }
   };
 
   useEffect(() => { fetchRemaining(); }, []);
@@ -54,14 +62,8 @@ export default function QuizGenerator({ onGenerate }) {
   };
 
   const handleGenerate = async () => {
-    if (remaining === 0) {
-      setShowNoQuotaModal(true);
-      return;
-    }
-    if (!topic.trim()) {
-      setError('Please enter a topic.');
-      return;
-    }
+    if (remaining === 0) { setShowNoQuotaModal(true); return; }
+    if (!topic.trim()) { setError('Please enter a topic.'); return; }
     setError('');
     setLoading(true);
     const ctrl = new AbortController();
@@ -73,58 +75,33 @@ export default function QuizGenerator({ onGenerate }) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('quizToken')}` || null,
         },
-        body: JSON.stringify({
-          topic: topic,
-          language: language,
-          difficulty: difficulty
-        }),
+        body: JSON.stringify({ topic, language, difficulty, num_questions: questionCount }),
         signal: ctrl.signal,
       });
-
       if (!response.ok) {
-        if (response.status === 429) {
-          setRemaining(0);
-          setShowNoQuotaModal(true);
-          return;
-        }
+        if (response.status === 429) { setRemaining(0); setShowNoQuotaModal(true); return; }
         throw new Error('Generation failed');
       }
       const data = await response.json();
-      // data now includes id, title, language, difficulty, questions
       setRemaining(prev => prev === null ? null : Math.max(0, prev - 1));
 
-      // Immediately create an initial score attempt (progressive saving)
       let scoreRecord = null;
       try {
         const initRes = await fetch(`${baseUrl}/scores/${data.id}`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('quizToken')}` || ''
-          },
-          body: JSON.stringify({
-            score: 0,
-            max_score: (data.questions || []).length || 0,
-            answers: {}
-          })
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('quizToken')}` || '' },
+          body: JSON.stringify({ score: 0, max_score: (data.questions || []).length || 0, answers: {} })
         });
-        if (initRes.ok) {
-          scoreRecord = await initRes.json();
-        }
-      } catch (e) { console.error('Initial score create failed', e); }
+        if (initRes.ok) scoreRecord = await initRes.json();
+      } catch {}
 
-      const quiz = {
-        id: data.id,
-        title: data.title,
-        language: data.language,
-        difficulty: data.difficulty,
-        questions: data.questions
-      };
-      onGenerate(quiz, scoreRecord?.id);
+      onGenerate({
+        id: data.id, title: data.title, language: data.language,
+        difficulty: data.difficulty, questions: data.questions
+      }, scoreRecord?.id);
       saveRecentTopic(topic.trim());
     } catch (error) {
-      if (error?.name === 'AbortError') return; // silently ignore
-      console.error('Error generating quiz:', error);
+      if (error?.name === 'AbortError') return;
       setError('Failed to generate quiz. Please try again.');
     } finally {
       setLoading(false);
@@ -138,190 +115,150 @@ export default function QuizGenerator({ onGenerate }) {
     setAbortCtrl(null);
   };
 
-  const getDifficultyIcon = (level) => {
-    switch (level) {
-      case 'easy': return '🟢';
-      case 'medium': return '🟡';
-      case 'hard': return '🔴';
-      default: return '🟢';
-    }
-  };
-
   return (
-    <div className="w-full max-w-lg glass-card p-8 rounded-2xl" data-testid="quiz-generator" role="form" aria-labelledby="generator-heading">
-      {/* Remaining quota display */}
-      <div className="flex justify-end mb-4">
-        <div className="text-sm text-gray-600">
-          {limitInfoLoading ? 'Checking quota...' : (remaining === null ? 'Quota: —' : `Remaining: ${remaining}/5`)}
-        </div>
-      </div>
-
-      <div className="text-center mb-8">
-        <h2 id="generator-heading" className="text-2xl font-bold text-gray-800 mb-2">Create New Quiz</h2>
-        <p className="text-gray-600">Generate an AI-powered quiz on any topic</p>
-      </div>
-
-      <div className="space-y-6">
-        {/* Topic Input */}
-        <div>
-          <label htmlFor="topic" className="block text-sm font-medium text-gray-700 mb-2">
-            📚 Quiz Topic
-          </label>
-          <input
-            id="topic"
-            type="text"
-            placeholder="e.g., World History, JavaScript, Biology..."
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter' && !loading) handleGenerate(); }}
-            className="form-input"
-            aria-describedby={error ? 'topic-error' : undefined}
-          />
-          {error && (
-            <p id="topic-error" role="alert" className="mt-1 text-sm text-red-600">{error}</p>
-          )}
-        </div>
-
-        {/* Quick Suggestions */}
-        <div>
-          <div className="block text-sm font-medium text-gray-700 mb-2">✨ Quick suggestions</div>
-          <div className="flex flex-wrap gap-2">
-            {suggestions.map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setTopic(s)}
-                className="px-3 py-1 rounded-full border border-gray-200 text-gray-700 bg-white hover:bg-gray-50 text-xs"
-                aria-label={`Use suggested topic ${s}`}
-              >
-                {s}
-              </button>
-            ))}
+    <>
+      <div className="w-full max-w-xl mx-auto" data-testid="quiz-generator">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sm:p-8">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Create a Quiz</h2>
+            <p className="text-gray-500 text-sm">Generate an AI-powered quiz on any topic</p>
+            {remaining !== null && (
+              <p className="text-xs text-gray-400 mt-2">
+                {remaining} generation{remaining !== 1 ? 's' : ''} remaining today
+              </p>
+            )}
           </div>
-        </div>
 
-        {/* Recent Topics */}
-        {recentTopics.length > 0 && (
-          <div>
-            <div className="block text-sm font-medium text-gray-700 mb-2">🕘 Recent topics</div>
+          <div className="space-y-6">
+            {/* Topic */}
+            <div>
+              <label htmlFor="topic" className="block text-sm font-medium text-gray-700 mb-2">Topic</label>
+              <input
+                id="topic"
+                type="text"
+                placeholder="e.g., World History, JavaScript, Biology..."
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !loading) handleGenerate(); }}
+                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors text-gray-900 text-lg placeholder-gray-400"
+              />
+              {error && <p className="mt-1.5 text-sm text-red-600">{error}</p>}
+            </div>
+
+            {/* Suggestions */}
             <div className="flex flex-wrap gap-2">
-              {recentTopics.map((s) => (
+              {suggestions.map(s => (
                 <button
                   key={s}
                   type="button"
                   onClick={() => setTopic(s)}
-                  className="px-3 py-1 rounded-full border border-gray-200 text-gray-700 bg-white hover:bg-gray-50 text-xs"
-                  aria-label={`Use recent topic ${s}`}
+                  className="px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
                 >
                   {s}
                 </button>
               ))}
             </div>
-          </div>
-        )}
 
-        {/* Difficulty Selection */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            ⚡ Difficulty Level
-          </label>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {['easy', 'medium', 'hard'].map((level) => (
-              <button
-                key={level}
-                type="button"
-                onClick={() => setDifficulty(level)}
-                className={`p-3 rounded-xl border-2 transition-all duration-300 ${
-                  difficulty === level
-                    ? 'border-indigo-500 bg-indigo-50 text-indigo-800'
-                    : 'border-gray-200 hover:border-indigo-300 hover:bg-gray-50'
-                }`}
-                aria-pressed={difficulty === level}
-                aria-label={`Set difficulty ${level}`}
-              >
-                <div className="text-center">
-                  <div className="text-2xl mb-1">{getDifficultyIcon(level)}</div>
-                  <div className={`text-sm font-medium ${difficulty === level ? 'text-indigo-800' : 'text-gray-700'}`}>
-                    {level.charAt(0).toUpperCase() + level.slice(1)}
-                  </div>
+            {/* Recent */}
+            {recentTopics.length > 0 && (
+              <div>
+                <p className="text-xs font-medium text-gray-500 mb-2">Recent</p>
+                <div className="flex flex-wrap gap-2">
+                  {recentTopics.map(s => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setTopic(s)}
+                      className="px-3 py-1.5 rounded-full text-xs font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+                    >
+                      {s}
+                    </button>
+                  ))}
                 </div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Language Selection */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            🌐 Language
-          </label>
-          <select
-            value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-            className="form-select"
-            aria-label="Select quiz language"
-          >
-            {languages.map((lang) => (
-              <option key={lang} value={lang}>
-                {lang}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Generate / Cancel Buttons */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleGenerate}
-            disabled={loading || !topic.trim()}
-            className={`btn-primary flex-1 ${loading ? 'opacity-75 cursor-not-allowed' : ''}`}
-          >
-            {loading ? (
-              <div className="flex items-center justify-center gap-3">
-                <div className="loading-spinner" aria-hidden="true"></div>
-                <span>Generating Quiz...</span>
-              </div>
-            ) : (
-              <div className="flex items-center justify-center gap-2">
-                <span aria-hidden="true">✨</span>
-                <span>Generate Quiz</span>
               </div>
             )}
-          </button>
-          {loading && (
-            <button type="button" onClick={handleCancel} className="btn-ghost px-4 py-2">
-              Cancel
+
+            {/* Difficulty */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty</label>
+              <div className="grid grid-cols-3 gap-3">
+                {DIFFICULTIES.map(d => (
+                  <button
+                    key={d.value}
+                    type="button"
+                    onClick={() => setDifficulty(d.value)}
+                    className={`py-2.5 rounded-xl border text-sm font-medium transition-all ${
+                      difficulty === d.value ? d.activeColor : d.color
+                    }`}
+                  >
+                    {d.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Number of questions */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Questions</label>
+              <div className="flex gap-2">
+                {QUESTION_COUNTS.map(n => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setQuestionCount(n)}
+                    className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-all ${
+                      questionCount === n
+                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700 ring-2 ring-indigo-200'
+                        : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Language */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Language</label>
+              <select
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white text-gray-900 transition-colors appearance-none bg-[url('data:image/svg+xml,%3csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20fill=%27none%27%20viewBox=%270%200%2020%2020%27%3e%3cpath%20stroke=%27%236b7280%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%20stroke-width=%271.5%27%20d=%27m6%208%204%204%204-4%27/%3e%3c/svg%3e')] bg-[position:right_0.75rem_center] bg-[length:1.5em_1.5em] bg-no-repeat pr-10"
+              >
+                {languages.map(lang => <option key={lang} value={lang}>{lang}</option>)}
+              </select>
+            </div>
+
+            {/* Generate button */}
+            <button
+              onClick={handleGenerate}
+              disabled={loading || !topic.trim()}
+              className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 text-base"
+            >
+              Generate Quiz
             </button>
-          )}
+          </div>
+
+          <div className="mt-6 pt-6 border-t border-gray-100 text-center">
+            <Link href="/editor" className="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+              Want more control? Try the Quiz Editor
+            </Link>
+          </div>
         </div>
       </div>
 
-      {/* Additional Options */}
-      <div className="mt-6 pt-6 border-t border-gray-200">
-        <div className="text-center">
-          <p className="text-xs text-gray-500 mb-2">Want more control?</p>
-          <Link href="/editor" className="text-sm text-indigo-600 hover:text-indigo-800 font-medium transition-colors">
-            Try Quiz Editor →
-          </Link>
-        </div>
-      </div>
+      {loading && <GeneratingScreen onCancel={handleCancel} />}
 
-      {/* Full-screen generating overlay */}
-      {loading && (
-        <GeneratingScreen onCancel={handleCancel} />
+      {showNoQuotaModal && (
+        <Modal isOpen={showNoQuotaModal} onClose={() => setShowNoQuotaModal(false)} title="Generation Limit Reached">
+          <p className="text-gray-600 mb-4">You&apos;ve used all your quiz generations for today. Come back tomorrow for more!</p>
+          <button onClick={() => setShowNoQuotaModal(false)} className="w-full py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors">
+            OK
+          </button>
+        </Modal>
       )}
-
-      {/* No quota modal */}
-      <ConfirmModal
-        isOpen={showNoQuotaModal}
-        title="No generations remaining"
-        message="You've reached your daily quiz generation limit. Please try again tomorrow."
-        confirmText="OK"
-        cancelText=""
-        onConfirm={() => setShowNoQuotaModal(false)}
-        onCancel={() => setShowNoQuotaModal(false)}
-        variant="default"
-      />
-    </div>
+    </>
   );
 }
