@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, JSON, ForeignKey, TIMESTAMP, Index, Boolean
+from sqlalchemy import Column, Integer, String, JSON, ForeignKey, TIMESTAMP, Index, Boolean, text
 from sqlalchemy.orm import relationship
 from database.database import Base
 from sqlalchemy.sql import func
@@ -14,7 +14,7 @@ class Quiz(Base):
     questions = Column(JSON)
     difficulty = Column(String(255))
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # Added owner field
-    is_public = Column(Boolean, nullable=False, server_default='0')  # New: public flag for browsing
+    is_public = Column(Boolean, nullable=False, server_default=text('false'))
     created_at = Column(
         TIMESTAMP,
         server_default=func.now(),
@@ -130,7 +130,7 @@ class Notification(Base):
     actor_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     type = Column(String(100), nullable=False)
     data = Column(JSON, nullable=True)
-    is_read = Column(Boolean, nullable=False, server_default='0')
+    is_read = Column(Boolean, nullable=False, server_default=text('false'))
     created_at = Column(
         TIMESTAMP,
         server_default=func.now(),

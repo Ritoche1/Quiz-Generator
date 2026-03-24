@@ -4,8 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { generateReportPDF, generateWorksheetPDF } from '@/lib/pdf';
 
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL.replace(/\/$/, '')}` : 'http://localhost:5000';
-const apiBase = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`;
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}` : 'http://localhost:5000';
 
 function ScoreRing({ percentage }) {
   const radius = 45;
