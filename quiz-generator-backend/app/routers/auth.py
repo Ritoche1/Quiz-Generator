@@ -11,8 +11,7 @@ from passlib.context import CryptContext
 from passlib.exc import MissingBackendError
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.services.email_service import send_password_reset_email
+from sqlalchemy import select
 from crud.user_crud import (
     create_password_reset_token,
     create_user,
@@ -22,8 +21,10 @@ from crud.user_crud import (
     invalidate_user_reset_tokens,
     update_user_password,
 )
-from database.database import get_db
-from database.models import User
+from app.services.email_service import send_password_reset_email
+from database.models import User, Quiz, UserScore, Friendship, Notification, Generation
+import os
+import secrets
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +66,12 @@ class UserResponse(BaseModel):
     email: str
     username: str
 
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
 
 class ForgotPasswordRequest(BaseModel):
     email: EmailStr
@@ -239,3 +246,42 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
 @router.get("/me", response_model=UserResponse)
 async def read_users_me(current_user: User = Depends(get_current_user)):
     return current_user
+
+@router.patch("/me", response_model=UserResponse)
+async def update_user_me(update: UserUpdate, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    if update.username is not None:
+        if len(update.username.strip()) < 2:
+            raise HTTPException(status_code=400, detail="Username must be at least 2 characters")
+        current_user.username = update.username.strip()
+    await db.commit()
+    await db.refresh(current_user)
+    return current_user
+
+@router.post("/change-password")
+async def change_password(payload: ChangePasswordRequest, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    if not verify_password(payload.current_password, current_user.hashed_password):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+    if len(payload.new_password) < 6:
+        raise HTTPException(status_code=400, detail="New password must be at least 6 characters")
+    current_user.hashed_password = get_password_hash(payload.new_password)
+    await db.commit()
+    return {"message": "Password changed successfully"}
+
+@router.delete("/delete-account")
+async def delete_account(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    from sqlalchemy import delete as sql_delete, or_
+    # Delete scores by other users on quizzes owned by this user
+    user_quiz_ids = (await db.execute(select(Quiz.id).where(Quiz.owner_id == current_user.id))).scalars().all()
+    if user_quiz_ids:
+        await db.execute(sql_delete(UserScore).where(UserScore.quiz_id.in_(user_quiz_ids)))
+    # Delete all related data
+    await db.execute(sql_delete(UserScore).where(UserScore.user_id == current_user.id))
+    await db.execute(sql_delete(Notification).where(or_(Notification.user_id == current_user.id, Notification.actor_user_id == current_user.id)))
+    await db.execute(sql_delete(Friendship).where(or_(Friendship.requester_id == current_user.id, Friendship.addressee_id == current_user.id)))
+    await db.execute(sql_delete(Generation).where(Generation.user_id == current_user.id))
+    # Delete quizzes owned by user
+    await db.execute(sql_delete(Quiz).where(Quiz.owner_id == current_user.id))
+    # Delete user (cascades to reset tokens)
+    await db.delete(current_user)
+    await db.commit()
+    return {"message": "Account deleted successfully"}

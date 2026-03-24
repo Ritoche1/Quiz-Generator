@@ -15,13 +15,14 @@ router = APIRouter(prefix="/quizzes", tags=["quizzes"])
 logger = logging.getLogger(__name__)
 
 
-# --- Static routes MUST come before /{quiz_id} to avoid being shadowed ---
+@router.get("/", response_model=List[QuizResponse])
+async def fetch_all_quizzes(db: AsyncSession = Depends(get_db)):
+    return await get_all_quizzes(db)
 
 @router.get("/count")
 async def get_quiz_count(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(func.count(Quiz.id)))
     return {"count": result.scalar()}
-
 
 @router.get("/stats/global")
 async def get_global_stats(db: AsyncSession = Depends(get_db)):
@@ -29,14 +30,17 @@ async def get_global_stats(db: AsyncSession = Depends(get_db)):
     quiz_count = await db.execute(select(func.count(Quiz.id)))
     total_quizzes = quiz_count.scalar()
 
+    # Total users
     user_count = await db.execute(select(func.count(User.id)))
     total_users = user_count.scalar()
 
+    # Average score
     score_avg = await db.execute(
         select(func.avg(UserScore.score * 100 / UserScore.max_score)).where(UserScore.max_score > 0)
     )
     avg_score = int(score_avg.scalar() or 0)
 
+    # Most popular topic (most attempted quiz title)
     popular_topic = await db.execute(
         select(Quiz.title, func.count(UserScore.id).label("attempts"))
         .join(UserScore, Quiz.id == UserScore.quiz_id)
@@ -55,7 +59,38 @@ async def get_global_stats(db: AsyncSession = Depends(get_db)):
         "topicOfTheWeek": popular_topic_name,
     }
 
+# Leaderboard endpoints
+@router.get("/leaderboard/{difficulty}")
+async def get_leaderboard_by_difficulty(difficulty: str, db: AsyncSession = Depends(get_db)):
+    """Get top performers by difficulty level"""
+    result = await db.execute(
+        select(
+            User.username,
+            func.max(UserScore.score).label('best_score'),
+            func.avg(UserScore.score).label('avg_score'),
+            func.count(UserScore.id).label('total_quizzes'),
+            UserScore.max_score
+        )
+        .join(UserScore, User.id == UserScore.user_id)
+        .join(Quiz, UserScore.quiz_id == Quiz.id)
+        .where(Quiz.difficulty == difficulty)
+        .group_by(User.username, UserScore.max_score)
+        .order_by(func.max(UserScore.score).desc())
+        .limit(10)
+    )
 
+    leaderboard = []
+    for row in result:
+        leaderboard.append({
+            "username": row.username,
+            "score": int((row.best_score / row.max_score) * 100) if row.max_score else 0,
+            "avgScore": int((row.avg_score / row.max_score) * 100) if row.max_score else 0,
+            "totalQuizzes": row.total_quizzes
+        })
+
+    return leaderboard
+
+# Browse quizzes with filtering
 @router.get("/browse/public")
 async def browse_public_quizzes(
     search: str = None,
@@ -162,61 +197,43 @@ async def browse_public_quizzes(
 
     return enhanced_quizzes
 
-
-@router.get("/leaderboard/{difficulty}")
-async def get_leaderboard_by_difficulty(difficulty: str, db: AsyncSession = Depends(get_db)):
-    """Get top performers by difficulty level"""
-    result = await db.execute(
-        select(
-            User.username,
-            func.max(UserScore.score).label("best_score"),
-            func.avg(UserScore.score).label("avg_score"),
-            func.count(UserScore.id).label("total_quizzes"),
-            UserScore.max_score,
-        )
-        .join(UserScore, User.id == UserScore.user_id)
-        .join(Quiz, UserScore.quiz_id == Quiz.id)
-        .where(Quiz.difficulty == difficulty)
-        .group_by(User.username, UserScore.max_score)
-        .order_by(func.max(UserScore.score).desc())
-        .limit(10)
-    )
-
-    leaderboard = []
-    for row in result:
-        leaderboard.append(
-            {
-                "username": row.username,
-                "score": int((row.best_score / row.max_score) * 100) if row.max_score else 0,
-                "avgScore": int((row.avg_score / row.max_score) * 100) if row.max_score else 0,
-                "totalQuizzes": row.total_quizzes,
-            }
-        )
-
-    return leaderboard
-
-
-# --- CRUD routes ---
-
-@router.post("", response_model=QuizResponse, include_in_schema=False)
-@router.post("/", response_model=QuizResponse)
-async def create_new_quiz(
-    quiz: QuizCreate,
+@router.get("/user/created")
+async def get_user_created_quizzes(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user)
 ):
-    quiz_data = quiz.dict()
-    quiz_data["questions"] = [q.dict() for q in quiz.questions]
-    quiz_data["owner_id"] = current_user.id
-    return await create_quiz(db, quiz_data)
+    """Get quizzes created by the current user"""
+    result = await db.execute(
+        select(Quiz)
+        .where(Quiz.owner_id == current_user.id)
+        .order_by(Quiz.created_at.desc())
+    )
+    quizzes = result.scalars().all()
+    return [{
+        "id": q.id,
+        "title": q.title,
+        "description": q.description,
+        "difficulty": q.difficulty,
+        "language": q.language,
+        "questions": q.questions,
+        "is_public": q.is_public,
+        "created_at": q.created_at
+    } for q in quizzes]
 
+# Parameterized routes MUST come after all static routes
+@router.get("/{quiz_id}", response_model=QuizResponse)
+async def get_single_quiz(quiz_id: int, db: AsyncSession = Depends(get_db)):
+    quiz = await get_quiz(db, quiz_id)
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+    return quiz
 
 @router.put("/{quiz_id}", response_model=QuizResponse)
 async def update_quiz_endpoint(
     quiz_id: int,
     quiz_update: QuizUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user)
 ):
     quiz = await get_quiz(db, quiz_id)
     if not quiz:
@@ -230,27 +247,13 @@ async def update_quiz_endpoint(
     updated_quiz = await update_quiz(db, quiz_id, update_data)
     return updated_quiz
 
-
-@router.get("/", response_model=List[QuizResponse])
-async def fetch_all_quizzes(db: AsyncSession = Depends(get_db)):
-    return await get_all_quizzes(db)
-
-
-@router.get("/{quiz_id}", response_model=QuizResponse)
-async def get_single_quiz(quiz_id: int, db: AsyncSession = Depends(get_db)):
-    quiz = await get_quiz(db, quiz_id)
-    if not quiz:
-        raise HTTPException(status_code=404, detail="Quiz not found")
-    return quiz
-
-
 @router.get("/{quiz_id}/scores/count")
 async def get_quiz_attempts(quiz_id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(
-        select(func.count(UserScore.id)).where(UserScore.quiz_id == quiz_id)
+        select(func.count(UserScore.id))
+        .where(UserScore.quiz_id == quiz_id)
     )
     return {"attempts": result.scalar()}
-
 
 @router.delete("/{quiz_id}")
 async def delete_quiz_endpoint(

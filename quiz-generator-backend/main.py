@@ -54,10 +54,17 @@ app.add_middleware(
 prefix = "/api"
 
 app.include_router(generator.router, prefix=prefix)
-app.include_router(quizzes.router, prefix=prefix)
-app.include_router(scores.router, prefix=prefix)
-app.include_router(auth.router, prefix=prefix)
-app.include_router(editor.router, prefix=prefix)
+app.include_router(quizzes.router , prefix=prefix)
+app.include_router(scores.router , prefix=prefix)
+app.include_router(auth.router , prefix=prefix)
+app.include_router(editor.router , prefix=prefix)
+
+# Include users router
+from app.routers import users
+app.include_router(users.router, prefix=prefix)
+
+# Include friends router
+from app.routers import friends
 app.include_router(friends.router, prefix=prefix)
 app.include_router(notifications.router, prefix=prefix)
 
