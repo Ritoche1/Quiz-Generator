@@ -1,11 +1,22 @@
+from typing import List, Optional
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.routers.auth import get_current_user
+from crud.score_crud import (
+    create_score,
+    update_score_db,
+    get_score_for_quiz,
+    get_latest_score_for_quiz,
+    get_score_by_id,
+    get_user_scores,
+    get_user_scores_paginated,
+    delete_score_db,
+)
 from database.database import get_db
 from database.models import User
-from app.routers.auth import get_current_user
-from crud.score_crud import *
-from schemas.score import *
-from typing import List, Optional
+from schemas.score import ScoreCreate, ScoreResponse, ScoreUpdate
 
 router = APIRouter(prefix="/scores", tags=["scores"])
 
@@ -60,7 +71,6 @@ async def get_attempt(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    from crud.score_crud import get_score_by_id
     score = await get_score_by_id(db, score_id, current_user.id)
     if not score:
         raise HTTPException(status_code=404, detail="Score not found")

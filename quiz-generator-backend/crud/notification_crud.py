@@ -23,7 +23,7 @@ async def count_unread(db: AsyncSession, user_id: int) -> int:
     result = await db.execute(
         select(func.count())
         .select_from(Notification)
-        .where(Notification.user_id == user_id, Notification.is_read == 0)
+        .where(Notification.user_id == user_id, Notification.is_read == False)
     )
     return int(result.scalar() or 0)
 
@@ -31,7 +31,7 @@ async def mark_read(db: AsyncSession, user_id: int, notification_id: int):
     notif = await db.get(Notification, notification_id)
     if not notif or notif.user_id != user_id:
         return None
-    notif.is_read = 1
+    notif.is_read = True
     await db.commit()
     await db.refresh(notif)
     return notif
@@ -39,8 +39,8 @@ async def mark_read(db: AsyncSession, user_id: int, notification_id: int):
 async def mark_all_read(db: AsyncSession, user_id: int):
     await db.execute(
         update(Notification)
-        .where(Notification.user_id == user_id, Notification.is_read == 0)
-        .values(is_read=1)
+        .where(Notification.user_id == user_id, Notification.is_read == False)
+        .values(is_read=True)
     )
     await db.commit()
     return True

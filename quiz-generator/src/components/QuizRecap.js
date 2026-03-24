@@ -4,8 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { generateReportPDF, generateWorksheetPDF } from '@/lib/pdf';
 
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL.replace(/\/$/, '')}` : 'http://localhost:5000';
-const apiBase = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`;
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}` : 'http://localhost:5000';
 
 export default function QuizRecap({ quiz, selectedAnswers, onRestart }) {
   const didMountRef = useRef(false);
@@ -83,14 +82,14 @@ export default function QuizRecap({ quiz, selectedAnswers, onRestart }) {
     const fetchStats = async () => {
       setStatsLoading(true);
       try {
-        const res = await fetch(`${apiBase}/quizzes/stats/global`);
+        const res = await fetch(`${baseUrl}/quizzes/stats/global`);
         if (res.ok) {
           const data = await res.json();
           if (mounted) setGlobalStats(data);
         }
 
         if (quiz && quiz.id) {
-          const r2 = await fetch(`${apiBase}/quizzes/${quiz.id}/scores/count`);
+          const r2 = await fetch(`${baseUrl}/quizzes/${quiz.id}/scores/count`);
           if (r2.ok) {
             const d2 = await r2.json();
             if (mounted) setAttemptsCount(d2.attempts ?? d2.count ?? 0);
@@ -227,12 +226,12 @@ export default function QuizRecap({ quiz, selectedAnswers, onRestart }) {
             <div className="text-xs">This quiz attempts</div>
           </div>
           <div className="p-3 bg-gray-50 rounded-lg text-center w-36">
-            <div className="text-lg font-bold text-indigo-600">{globalStats?.total_quizzes ?? '—'}</div>
+            <div className="text-lg font-bold text-indigo-600">{globalStats?.totalQuizzes ?? '—'}</div>
             <div className="text-xs">Total quizzes</div>
           </div>
           <div className="p-3 bg-gray-50 rounded-lg text-center w-36">
-            <div className="text-lg font-bold text-indigo-600">{globalStats?.total_attempts ?? '—'}</div>
-            <div className="text-xs">Total attempts</div>
+            <div className="text-lg font-bold text-indigo-600">{globalStats?.totalUsers ?? '—'}</div>
+            <div className="text-xs">Total users</div>
           </div>
         </div>
       </div>
