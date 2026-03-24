@@ -1,0 +1,9 @@
+services:
+  frontend:
+    env_file:
+      - ./quiz-generator/.env
+      - ./quiz-generator/.env.local
+
+  backend:
+    env_file:
+      - ./quiz-generator-backend/.env
