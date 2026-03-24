@@ -66,10 +66,11 @@ export default function BrowseQuizzes() {
 
     // Filter by search term
     if (searchTerm) {
-      filtered = filtered.filter(quiz => 
-        quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        quiz.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        quiz.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(quiz =>
+        (quiz.title || '').toLowerCase().includes(term) ||
+        (quiz.description || '').toLowerCase().includes(term) ||
+        (quiz.tags || []).some(tag => tag.toLowerCase().includes(term))
       );
     }
 

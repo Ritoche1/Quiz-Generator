@@ -1,15 +1,19 @@
+import logging
+from datetime import datetime, timezone
+from typing import List, Optional
+
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from sqlalchemy import select, func
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.routers.auth import get_current_user
 from app.services.mistral_service import generate_quiz_content
 from app.services.quiz_service import save_generated_quiz
 from database.database import get_db
-from database.models import User
-from database.models import Generation
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
-from datetime import datetime, date
-from app.routers.auth import get_current_user
-from pydantic import BaseModel
-from typing import List, Optional
+from database.models import User, Generation
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/generate", tags=["quiz-generation"])
 
@@ -41,11 +45,11 @@ async def generate_quiz_endpoint(
 ):
     try:
         # Count today's generations for the user
-        today = datetime.utcnow().date()
+        today = datetime.now(timezone.utc).date()
         today_start = datetime.combine(today, datetime.min.time())
         q = select(func.count(Generation.id)).where(
             Generation.user_id == current_user.id,
-            Generation.created_at >= today_start
+            Generation.created_at >= today_start,
         )
         result = await db.execute(q)
         used = result.scalar() or 0
@@ -57,7 +61,7 @@ async def generate_quiz_endpoint(
         quiz_data = await generate_quiz_content(
             quiz_request.topic,
             quiz_request.difficulty,
-            quiz_request.language
+            quiz_request.language,
         )
         questions = quiz_data["quiz"]["questions"]
 
@@ -87,19 +91,20 @@ async def generate_quiz_endpoint(
     except HTTPException:
         raise
     except Exception as e:
+        logger.exception("Quiz generation failed")
         raise HTTPException(
             status_code=500,
-            detail=f"Quiz generation failed: {str(e)}"
+            detail="Quiz generation failed. Please try again later.",
         )
 
 @router.get('/remaining')
 async def get_remaining_generations(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     # Count today's generations for the user
-    today = datetime.utcnow().date()
+    today = datetime.now(timezone.utc).date()
     today_start = datetime.combine(today, datetime.min.time())
     q = select(func.count(Generation.id)).where(
         Generation.user_id == current_user.id,
-        Generation.created_at >= today_start
+        Generation.created_at >= today_start,
     )
     result = await db.execute(q)
     used = result.scalar() or 0

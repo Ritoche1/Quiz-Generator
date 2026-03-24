@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 
 export default function AuthForm({onLogin}) {
     const [isLogin, setIsLogin] = useState(true);
@@ -32,11 +33,10 @@ export default function AuthForm({onLogin}) {
             });
 
             const data = await response.json();
-            if (!response.ok) throw new Error(data.error || 'Something went wrong');
+            if (!response.ok) throw new Error(data.detail || data.error || 'Something went wrong');
 
-            if (isLogin) {
+            if (data.access_token) {
                 localStorage.setItem('quizToken', data.access_token);
-                // Notify app shell and parent without full reload
                 try { onLogin?.(); } catch {}
                 try { window.dispatchEvent(new CustomEvent('auth-login')); } catch {}
             } else {
@@ -99,13 +99,12 @@ export default function AuthForm({onLogin}) {
                     {isLogin ? 'Login' : 'Register'}
                 </button>
                 {isLogin && (
-                    <button
-                        type="button"
-                        onClick={() => router.push('/reset-password')}
-                        className="w-full text-sm text-blue-600 hover:underline"
+                    <Link
+                        href="/reset-password"
+                        className="block w-full text-center text-sm text-blue-600 hover:underline"
                     >
                         Forgot your password?
-                    </button>
+                    </Link>
                 )}
             </form>
         </div>
