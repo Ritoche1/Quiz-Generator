@@ -26,7 +26,7 @@ describe('ResetPasswordForm', () => {
     fireEvent.click(screen.getByRole('button', { name: /Send reset link/i }));
 
     expect(await screen.findByText(/password reset instructions have been sent/i)).toBeInTheDocument();
-    expect(screen.getByText(/please check your email and click the reset link/i)).toBeInTheDocument();
+    expect(screen.getByText(/please check your email for a password reset link/i)).toBeInTheDocument();
     expect(screen.queryByLabelText(/Reset token/i)).not.toBeInTheDocument();
   });
 

@@ -159,7 +159,7 @@ export default function ResetPasswordForm() {
             {step === 'request_sent' && (
                 <div className="space-y-4">
                     <p className="text-sm text-gray-600">
-                        Please check your email and click the reset link. Then come back here from that link to set a new password.
+                        Please check your email for a password reset link. Click the link in the email to proceed with resetting your password.
                     </p>
                 </div>
             )}

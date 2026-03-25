@@ -130,7 +130,7 @@ async def forgot_password(payload: ForgotPasswordRequest, db: AsyncSession = Dep
 
     email_sent = await send_password_reset_email(user_email, reset_token.token)
     if not email_sent:
-        logger.warning("Password reset email could not be delivered for %s", user_email)
+        logger.warning("Password reset email could not be delivered.")
 
     return ForgotPasswordResponse(message=response_message)
 
