@@ -14,7 +14,6 @@ export default function ResetPasswordForm() {
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [tokenFromServer, setTokenFromServer] = useState('');
 
     useEffect(() => {
         if (typeof window === 'undefined') return;
@@ -48,18 +47,8 @@ export default function ResetPasswordForm() {
                 throw new Error(data.detail || 'Unable to process password reset request.');
             }
 
-            if (data.reset_token) {
-                setMessage(data.message || 'If the email exists, you will receive a reset link.');
-                setToken(data.reset_token);
-                setTokenFromServer(data.reset_token);
-                if (data.notice) {
-                    setMessage(prev => `${prev}\n${data.notice}`);
-                }
-            } else {
-                setMessage('If the email exists, we just sent reset instructions. Check your inbox.');
-                setTokenFromServer('');
-            }
-            setStep('verify');
+            setMessage(data.message || 'If the email exists, we just sent reset instructions. Check your inbox.');
+            setStep('request_sent');
         } catch (err) {
             setError(err.message);
         } finally {
@@ -134,23 +123,7 @@ export default function ResetPasswordForm() {
 
             {step === 'verify' && (
                 <form onSubmit={handleReset} className="space-y-4">
-                    <p className="text-sm text-gray-600">Enter the reset token and your new password.</p>
-                    {tokenFromServer && (
-                        <div className="p-3 bg-blue-50 border border-blue-200 rounded-md text-xs text-blue-900 break-all">
-                            Store this token somewhere safe: <span className="font-mono">{tokenFromServer}</span>
-                        </div>
-                    )}
-                    <div>
-                        <label htmlFor="token" className="block text-sm font-medium mb-1">Reset token</label>
-                        <input
-                            id="token"
-                            type="text"
-                            value={token}
-                            onChange={(event) => setToken(event.target.value)}
-                            className="w-full p-2 border rounded-lg"
-                            required
-                        />
-                    </div>
+                    <p className="text-sm text-gray-600">Choose your new password.</p>
                     <div>
                         <label htmlFor="new-password" className="block text-sm font-medium mb-1">New password</label>
                         <input
@@ -181,6 +154,14 @@ export default function ResetPasswordForm() {
                         {isLoading ? 'Updating...' : 'Reset password'}
                     </button>
                 </form>
+            )}
+
+            {step === 'request_sent' && (
+                <div className="space-y-4">
+                    <p className="text-sm text-gray-600">
+                        Please check your email and click the reset link. Then come back here from that link to set a new password.
+                    </p>
+                </div>
             )}
 
             {step === 'success' && (
