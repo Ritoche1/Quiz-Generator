@@ -1,9 +1,78 @@
 services:
   frontend:
+    container_name: quiz-frontend
+    build:
+      context: ./quiz-generator
+      args:
+        NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL}
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - quiz-network
     env_file:
       - ./quiz-generator/.env
-      - ./quiz-generator/.env.local
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:83/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: quiz-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-quizdb}
+      POSTGRES_USER: ${POSTGRES_USER:-quizuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-quizpass}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - quiz-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-quizuser} -d ${POSTGRES_DB:-quizdb}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    restart: always
 
   backend:
+    build: ./quiz-generator-backend
+    container_name: quiz-backend
     env_file:
       - ./quiz-generator-backend/.env
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - quiz-network
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:5000/api/ping')\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+networks:
+  quiz-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

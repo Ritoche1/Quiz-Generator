@@ -12,6 +12,7 @@ from passlib.exc import MissingBackendError
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from database.database import get_db
 from crud.user_crud import (
     create_password_reset_token,
     create_user,
