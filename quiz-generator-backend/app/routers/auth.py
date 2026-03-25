@@ -1,6 +1,4 @@
 import logging
-import os
-import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -80,8 +78,6 @@ class ForgotPasswordRequest(BaseModel):
 
 class ForgotPasswordResponse(BaseModel):
     message: str
-    reset_token: Optional[str] = None
-    notice: Optional[str] = None
 
 
 class ResetPasswordRequest(BaseModel):
@@ -113,9 +109,10 @@ def get_password_hash(password):
 
 @router.post("/forgot-password", response_model=ForgotPasswordResponse)
 async def forgot_password(payload: ForgotPasswordRequest, db: AsyncSession = Depends(get_db)):
+    response_message = "If the account exists, password reset instructions have been sent."
     user = await get_user_by_email(db, payload.email)
     if not user:
-        return ForgotPasswordResponse(message="If the account exists, password reset instructions have been sent.")
+        return ForgotPasswordResponse(message=response_message)
 
     user_email = user.email
 
@@ -132,16 +129,10 @@ async def forgot_password(payload: ForgotPasswordRequest, db: AsyncSession = Dep
         raise
 
     email_sent = await send_password_reset_email(user_email, reset_token.token)
-
-    response_payload = {
-        "message": "Password reset instructions generated successfully."
-    }
-
     if not email_sent:
-        response_payload["notice"] = "Email delivery not configured; use the token shown below to reset manually."
-        response_payload["reset_token"] = reset_token.token
+        logger.warning("Password reset email could not be delivered.")
 
-    return ForgotPasswordResponse(**response_payload)
+    return ForgotPasswordResponse(message=response_message)
 
 
 @router.post("/reset-password")
