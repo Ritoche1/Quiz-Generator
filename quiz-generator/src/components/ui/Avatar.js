@@ -14,7 +14,7 @@ function hashString(str) {
   return Math.abs(hash);
 }
 
-export default function Avatar({ username = '', size = 'md', className = '' }) {
+export default function Avatar({ username = '', size = 'md', className = '', imageUrl = null }) {
   const initial = (username || 'U').charAt(0).toUpperCase();
   const colorClass = COLORS[hashString(username || '') % COLORS.length];
   const sizes = {
@@ -23,8 +23,19 @@ export default function Avatar({ username = '', size = 'md', className = '' }) {
     lg: 'w-16 h-16 text-2xl',
     xl: 'w-20 h-20 text-3xl',
   };
+  const base = `${sizes[size] || sizes.md} rounded-full overflow-hidden shrink-0`;
+
+  if (imageUrl) {
+    return (
+      <div className={`${base} ${className}`}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={imageUrl} alt={username} className="w-full h-full object-cover" />
+      </div>
+    );
+  }
+
   return (
-    <div className={`${sizes[size] || sizes.md} ${colorClass} rounded-full flex items-center justify-center text-white font-semibold ${className}`}>
+    <div className={`${base} ${colorClass} flex items-center justify-center text-white font-semibold ${className}`}>
       {initial}
     </div>
   );

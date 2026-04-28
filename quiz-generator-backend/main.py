@@ -3,8 +3,11 @@ import os
 import signal
 from contextlib import asynccontextmanager
 
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from database.database import engine, Base
 from app.routers import quizzes, scores, generator, auth, editor, friends, notifications
@@ -51,22 +54,22 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type"],
 )
 
-prefix = "/api"
+os.makedirs("/app/uploads/avatars", exist_ok=True)
+os.makedirs("/app/uploads/covers", exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="/app/uploads"), name="uploads")
 
-app.include_router(generator.router, prefix=prefix)
-app.include_router(quizzes.router , prefix=prefix)
-app.include_router(scores.router , prefix=prefix)
-app.include_router(auth.router , prefix=prefix)
-app.include_router(editor.router , prefix=prefix)
+app.include_router(generator.router)
+app.include_router(quizzes.router)
+app.include_router(scores.router)
+app.include_router(auth.router)
+app.include_router(editor.router)
 
-# Include users router
 from app.routers import users
-app.include_router(users.router, prefix=prefix)
+app.include_router(users.router)
 
-# Include friends router
 from app.routers import friends
-app.include_router(friends.router, prefix=prefix)
-app.include_router(notifications.router, prefix=prefix)
+app.include_router(friends.router)
+app.include_router(notifications.router)
 
 
 @app.get("/api/ping")

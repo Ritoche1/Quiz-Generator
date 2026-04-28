@@ -41,10 +41,19 @@ export default function Leaderboard() {
 
   const fetchLeaderboard = async () => {
     try {
-      const [e, m, h] = await Promise.all(
-        DIFFICULTIES.map(d => fetch(`${baseUrl}/quizzes/leaderboard/${d}`).then(r => r.json()))
+      const results = await Promise.all(
+        DIFFICULTIES.map(d =>
+          fetch(`${baseUrl}/quizzes/leaderboard/${d}`)
+            .then(r => r.ok ? r.json() : [])
+            .catch(() => [])
+        )
       );
-      setLeaderboardData({ easy: e, medium: m, hard: h });
+      const [e, m, h] = results;
+      setLeaderboardData({
+        easy: Array.isArray(e) ? e : [],
+        medium: Array.isArray(m) ? m : [],
+        hard: Array.isArray(h) ? h : [],
+      });
     } catch {}
   };
 

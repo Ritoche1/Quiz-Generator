@@ -121,12 +121,20 @@ export default function QuizGenerator({ onGenerate }) {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sm:p-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Create a Quiz</h2>
+            <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456Z" />
+              </svg>
+            </div>
+            <h2 className="font-display text-2xl font-bold text-gray-900 mb-1.5">Create a Quiz</h2>
             <p className="text-gray-500 text-sm">Generate an AI-powered quiz on any topic</p>
             {remaining !== null && (
-              <p className="text-xs text-gray-400 mt-2">
-                {remaining} generation{remaining !== 1 ? 's' : ''} remaining today
-              </p>
+              <div className="inline-flex items-center gap-1.5 mt-2.5 px-3 py-1 bg-indigo-50 rounded-full">
+                <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full" />
+                <p className="text-xs text-indigo-600 font-medium">
+                  {remaining} generation{remaining !== 1 ? 's' : ''} remaining today
+                </p>
+              </div>
             )}
           </div>
 
@@ -235,7 +243,7 @@ export default function QuizGenerator({ onGenerate }) {
             <button
               onClick={handleGenerate}
               disabled={loading || !topic.trim()}
-              className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 text-base"
+              className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 text-base"
             >
               Generate Quiz
             </button>

@@ -23,6 +23,22 @@ module.exports = {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['"Plus Jakarta Sans"', 'Inter', 'system-ui', 'sans-serif'],
+      },
+      keyframes: {
+        float: {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-20px)' },
+        },
+        'pulse-soft': {
+          '0%, 100%': { opacity: '0.5' },
+          '50%': { opacity: '1' },
+        },
+      },
+      animation: {
+        float: 'float 7s ease-in-out infinite',
+        'float-delayed': 'float 7s ease-in-out 3.5s infinite',
+        'pulse-soft': 'pulse-soft 3s ease-in-out infinite',
       },
     },
   },

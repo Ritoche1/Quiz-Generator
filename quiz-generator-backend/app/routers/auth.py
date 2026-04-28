@@ -4,7 +4,7 @@ import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -66,6 +66,11 @@ class UserResponse(BaseModel):
     id: int
     email: str
     username: str
+    avatar_url: Optional[str] = None
+    cover_url: Optional[str] = None
+
+    class Config:
+        from_attributes = True
 
 class UserUpdate(BaseModel):
     username: Optional[str] = None
@@ -123,7 +128,7 @@ async def forgot_password(payload: ForgotPasswordRequest, db: AsyncSession = Dep
         await invalidate_user_reset_tokens(db, user.id)
 
         token = secrets.token_urlsafe(32)
-        expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+        expires_at = (datetime.now(timezone.utc) + timedelta(hours=1)).replace(tzinfo=None)
         reset_token = await create_password_reset_token(db, user.id, token, expires_at)
         await db.commit()
         await db.refresh(reset_token)
@@ -161,7 +166,7 @@ async def reset_password(payload: ResetPasswordRequest, db: AsyncSession = Depen
         hashed_password = get_password_hash(payload.password)
         await update_user_password(db, user, hashed_password)
 
-        reset_token.used_at = datetime.now(timezone.utc)
+        reset_token.used_at = datetime.now(timezone.utc).replace(tzinfo=None)
         await db.commit()
     except HTTPException:
         await db.rollback()
@@ -267,6 +272,53 @@ async def change_password(payload: ChangePasswordRequest, current_user: User = D
     current_user.hashed_password = get_password_hash(payload.new_password)
     await db.commit()
     return {"message": "Password changed successfully"}
+
+_ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+_MAX_UPLOAD_BYTES = 5 * 1024 * 1024  # 5 MB
+
+async def _save_upload(file: UploadFile, folder: str, user_id: int) -> str:
+    if file.content_type not in _ALLOWED_IMAGE_TYPES:
+        raise HTTPException(status_code=400, detail="Only JPEG, PNG, WebP or GIF images are allowed")
+    content = await file.read()
+    if len(content) > _MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=400, detail="File too large — maximum 5 MB")
+    ext = (file.filename or "image").rsplit(".", 1)[-1].lower()
+    if ext not in {"jpg", "jpeg", "png", "webp", "gif"}:
+        ext = "jpg"
+    dir_path = f"/app/uploads/{folder}"
+    os.makedirs(dir_path, exist_ok=True)
+    # Remove any previous uploads for this user in this folder
+    for existing in os.listdir(dir_path):
+        if existing.startswith(f"{user_id}."):
+            os.remove(os.path.join(dir_path, existing))
+    filename = f"{user_id}.{ext}"
+    with open(os.path.join(dir_path, filename), "wb") as f:
+        f.write(content)
+    return f"/uploads/{folder}/{filename}"
+
+@router.post("/me/avatar", response_model=UserResponse)
+async def upload_avatar(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    url = await _save_upload(file, "avatars", current_user.id)
+    current_user.avatar_url = url
+    await db.commit()
+    await db.refresh(current_user)
+    return current_user
+
+@router.post("/me/cover", response_model=UserResponse)
+async def upload_cover(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    url = await _save_upload(file, "covers", current_user.id)
+    current_user.cover_url = url
+    await db.commit()
+    await db.refresh(current_user)
+    return current_user
 
 @router.delete("/delete-account")
 async def delete_account(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):

@@ -1,5 +1,3 @@
-from datetime import datetime, timezone
-
 from crud.quiz_crud import create_quiz
 
 async def save_generated_quiz(
@@ -19,7 +17,5 @@ async def save_generated_quiz(
         "questions": questions,
         "owner_id": owner_id,
         "is_public": is_public,
-        "created_at": datetime.now(timezone.utc),
-        "updated_at": datetime.now(timezone.utc)
     }
     return await create_quiz(db, quiz_data)
