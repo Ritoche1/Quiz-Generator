@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
+import { getErrorMessage } from '@/lib/api';
 
 export default function TemplatePickerModal({ isOpen, onClose, onSelect, apiBase }) {
   const [activeTab, setActiveTab] = useState('my'); // 'my' | 'templates' | 'public'
@@ -20,25 +21,25 @@ export default function TemplatePickerModal({ isOpen, onClose, onSelect, apiBase
         const token = typeof window !== 'undefined' ? localStorage.getItem('quizToken') : null;
         if (!token) { setMyQuizzes([]); return; }
         const r = await fetch(`${apiBase}/editor/my-quizzes`, { headers: { 'Authorization': `Bearer ${token}` } });
-        if (!r.ok) throw new Error('Failed to load your quizzes');
+        if (!r.ok) throw new Error(await getErrorMessage(r, 'Failed to load your quizzes.'));
         const data = await r.json();
         setMyQuizzes(Array.isArray(data) ? data : []);
-      } catch (e) { setError(e.message); }
+      } catch (e) { setError(e?.message || 'Something went wrong. Please try again later.'); }
     };
 
     const fetchTemplates = async () => {
       try {
         const r = await fetch(`${apiBase}/editor/templates`);
-        if (!r.ok) throw new Error('Failed to load templates');
+        if (!r.ok) throw new Error(await getErrorMessage(r, 'Failed to load templates.'));
         const data = await r.json();
         setTemplates(Array.isArray(data) ? data : []);
-      } catch (e) { setError(e.message); }
+      } catch (e) { setError(e?.message || 'Something went wrong. Please try again later.'); }
     };
 
     const fetchPublic = async () => {
       try {
         const r = await fetch(`${apiBase}/quizzes/browse/public`);
-        if (!r.ok) throw new Error('Failed to load public quizzes');
+        if (!r.ok) throw new Error(await getErrorMessage(r, 'Failed to load public quizzes.'));
         const data = await r.json();
         setPublicQuizzes(Array.isArray(data) ? data : []);
       } catch (e) { /* non-fatal */ }
@@ -77,7 +78,7 @@ export default function TemplatePickerModal({ isOpen, onClose, onSelect, apiBase
         setLoading(true);
         try {
           const r = await fetch(`${apiBase}/quizzes/${item.id}`);
-          if (!r.ok) throw new Error('Failed to load quiz');
+          if (!r.ok) throw new Error(await getErrorMessage(r, 'Failed to load quiz.'));
           const full = await r.json();
           const normalized = {
             title: full.title,
@@ -91,7 +92,7 @@ export default function TemplatePickerModal({ isOpen, onClose, onSelect, apiBase
         } finally { setLoading(false); }
       }
     } catch (e) {
-      setError(e.message || 'Failed to use template');
+      setError(e?.message || 'Failed to use template.');
     }
   };
 

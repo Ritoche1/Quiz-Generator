@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { getErrorMessage } from '@/lib/api';
 
 export default function AuthForm({ onLogin }) {
   const [isLogin, setIsLogin] = useState(true);
@@ -30,8 +31,8 @@ export default function AuthForm({ onLogin }) {
 
     try {
       const response = await fetch(baseUrl + url, { method: 'POST', headers, body });
+      if (!response.ok) throw new Error(await getErrorMessage(response, 'Unable to sign in. Please try again.'));
       const data = await response.json();
-      if (!response.ok) throw new Error(data.detail || data.error || 'Something went wrong');
 
       if (isLogin) {
         localStorage.setItem('quizToken', data.access_token);
@@ -44,7 +45,7 @@ export default function AuthForm({ onLogin }) {
         try { window.dispatchEvent(new CustomEvent('auth-login')); } catch {}
       }
     } catch (err) {
-      setError(err.message);
+      setError(err?.message || 'Something went wrong. Please try again later.');
     } finally {
       setLoading(false);
     }

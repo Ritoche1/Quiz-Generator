@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import GeneratingScreen from './GeneratingScreen';
 import Modal from './ui/Modal';
+import { getErrorMessage } from '@/lib/api';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}` : 'http://localhost:5000';
 
@@ -44,7 +45,7 @@ export default function QuizGenerator({ onGenerate }) {
     try {
       setLimitInfoLoading(true);
       const res = await fetch(`${baseUrl}/generate/remaining`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('quizToken')}` } });
-      if (!res.ok) throw new Error('Failed');
+      if (!res.ok) throw new Error(await getErrorMessage(res, 'Failed to load remaining quota.'));
       const data = await res.json();
       setRemaining(data.remaining);
     } catch { setRemaining(null); }
@@ -80,7 +81,7 @@ export default function QuizGenerator({ onGenerate }) {
       });
       if (!response.ok) {
         if (response.status === 429) { setRemaining(0); setShowNoQuotaModal(true); return; }
-        throw new Error('Generation failed');
+        throw new Error(await getErrorMessage(response, 'Failed to generate quiz. Please try again.'));
       }
       const data = await response.json();
       setRemaining(prev => prev === null ? null : Math.max(0, prev - 1));
@@ -102,7 +103,7 @@ export default function QuizGenerator({ onGenerate }) {
       saveRecentTopic(topic.trim());
     } catch (error) {
       if (error?.name === 'AbortError') return;
-      setError('Failed to generate quiz. Please try again.');
+      setError(error?.message || 'Failed to generate quiz. Please try again.');
     } finally {
       setLoading(false);
       setAbortCtrl(null);

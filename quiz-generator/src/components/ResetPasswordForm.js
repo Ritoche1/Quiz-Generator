@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { getErrorMessage } from '@/lib/api';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}` : 'http://localhost:5000';
 
@@ -42,15 +43,16 @@ export default function ResetPasswordForm() {
                 body: JSON.stringify({ email })
             });
 
-            const data = await response.json();
             if (!response.ok) {
-                throw new Error(data.detail || 'Unable to process password reset request.');
+                throw new Error(await getErrorMessage(response, 'Unable to process password reset request.'));
             }
+
+            const data = await response.json();
 
             setMessage(data.message || 'If the email exists, we just sent reset instructions. Check your inbox.');
             setStep('request_sent');
         } catch (err) {
-            setError(err.message);
+            setError(err?.message || 'Something went wrong. Please try again later.');
         } finally {
             setIsLoading(false);
         }
@@ -76,15 +78,16 @@ export default function ResetPasswordForm() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token: token.trim(), password: newPassword })
             });
-            const data = await response.json();
             if (!response.ok) {
-                throw new Error(data.detail || 'Failed to reset password.');
+                throw new Error(await getErrorMessage(response, 'Failed to reset password.'));
             }
+
+            const data = await response.json();
 
             setMessage(data.message || 'Password updated successfully.');
             setStep('success');
         } catch (err) {
-            setError(err.message);
+            setError(err?.message || 'Something went wrong. Please try again later.');
         } finally {
             setIsLoading(false);
         }

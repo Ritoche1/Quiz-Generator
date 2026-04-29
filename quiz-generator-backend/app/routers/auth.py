@@ -131,7 +131,11 @@ async def forgot_password(payload: ForgotPasswordRequest, db: AsyncSession = Dep
         await db.refresh(reset_token)
     except Exception:
         await db.rollback()
-        raise
+        logger.exception("Failed to create password reset token")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unable to process password reset request. Please try again later.",
+        )
 
     email_sent = await send_password_reset_email(user_email, reset_token.token)
     if not email_sent:
