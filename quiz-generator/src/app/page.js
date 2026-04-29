@@ -216,12 +216,12 @@ export default function Home({ initialQuiz = null }) {
     (async () => {
       try {
         const res = await fetch(`${baseUrl}/quizzes/${quizId}`);
-        if (!res.ok) throw new Error();
+        if (!res.ok) throw new Error(await getErrorMessage(res, 'Failed to load quiz.'));
         const data = await res.json();
         setQuiz({ id: data.id, title: data.title, language: data.language, difficulty: data.difficulty, questions: data.questions || [] });
         setCurrentQuestionIndex(0); setSelectedAnswers({}); setShowRecap(false); setShowFeedback(false);
         setSessionStreak(0); setScoreId(null);
-      } catch { setQuiz(null); }
+      } catch (error) { setError(error?.message || 'Failed to load quiz.'); setQuiz(null); }
     })();
   }, []);
 
@@ -231,7 +231,10 @@ export default function Home({ initialQuiz = null }) {
     const token = localStorage.getItem('quizToken');
     if (token) {
       fetch(`${baseUrl}/auth/me`, { headers: { 'Authorization': `Bearer ${token}` } })
-        .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+        .then(async (r) => {
+          if (!r.ok) throw new Error(await getErrorMessage(r, 'Failed to validate your session.'));
+          return r.json();
+        })
         .then(data => {
           setUser(data); setIsAuthenticated(true);
           const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;

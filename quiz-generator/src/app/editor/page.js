@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Skeleton from '@/components/ui/Skeleton';
 import TemplatePickerModal from '@/components/TemplatePickerModal';
 import ConfirmModal from '@/components/ConfirmModal';
+import { getErrorMessage } from '@/lib/api';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}` : 'http://localhost:5000';
 
@@ -73,10 +74,10 @@ export default function QuizEditor() {
         setLoading(true);
         try {
           const res = await fetch(`${baseUrl}/quizzes/${loadId}`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('quizToken')}` } });
-          if (!res.ok) throw new Error();
+          if (!res.ok) throw new Error(await getErrorMessage(res, 'Failed to load requested quiz.'));
           setQuiz(await res.json());
           setCurrentQuestionIndex(0);
-        } catch { alert('Failed to load requested quiz'); }
+        } catch (error) { alert(error?.message || 'Failed to load requested quiz.'); }
         finally { setLoading(false); }
       })();
     } catch {}
@@ -137,11 +138,12 @@ export default function QuizEditor() {
           questions: validQuestions,
         }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) throw new Error(await getErrorMessage(res, 'Failed to save quiz.'));
       setSaveStatus('success');
       setTimeout(() => setSaveStatus(''), 3500);
-    } catch {
+    } catch (error) {
       setSaveStatus('error');
+      setSaveError(error?.message || 'Failed to save quiz.');
       setTimeout(() => setSaveStatus(''), 3500);
     }
   };
@@ -155,11 +157,9 @@ export default function QuizEditor() {
   };
 
   const closePreview = () => { setShowPreview(false); setPreviewCurrentQuestion(0); setPreviewAnswers({}); };
-
   const handleSelectTemplate = (tpl) => {
     setQuiz({ title: tpl.title, description: tpl.description || '', language: tpl.language || 'English', difficulty: tpl.difficulty || 'easy', questions: Array.isArray(tpl.questions) ? tpl.questions : [], id: tpl.id });
     setCurrentQuestionIndex(0);
-    setShowTemplateModal(false);
   };
 
   const confirmStartBlank = () => {
