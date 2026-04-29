@@ -148,7 +148,7 @@ export default function QuizRecap({ quiz, selectedAnswers, onRestart }) {
         {/* Score ring */}
         <div className="text-center mb-8">
           <ScoreRing percentage={percentage} />
-          <h2 className="text-2xl font-bold text-gray-900 mt-4">{getMessage()}</h2>
+          <h2 className="font-display text-2xl font-bold text-gray-900 mt-4">{getMessage()}</h2>
           <p className="text-gray-500 mt-1">
             You got <span className="font-semibold text-gray-900">{score}</span> out of <span className="font-semibold text-gray-900">{total}</span> correct
           </p>
@@ -212,7 +212,7 @@ export default function QuizRecap({ quiz, selectedAnswers, onRestart }) {
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={onRestart}
-              className="py-2.5 px-4 text-sm font-medium rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+              className="py-2.5 px-4 text-sm font-medium rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white transition-all shadow-sm hover:shadow-md"
             >
               New Quiz
             </button>

@@ -39,7 +39,7 @@ async def update_score(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    score_data = score.dict()
+    score_data = score.dict(exclude_none=True)
     return await update_score_db(db, score_id, score_data, current_user.id)
 
 @router.get("/{quiz_id}", response_model=ScoreResponse)

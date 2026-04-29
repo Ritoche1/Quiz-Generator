@@ -169,3 +169,37 @@ html.route-changing *, html.route-changing *::before, html.route-changing *::aft
   to { transform: scaleY(1); transform-origin: bottom; }
 }
 .podium-animate { animation: podium-rise 0.6s ease-out forwards; }
+
+/* ===== Design enhancements ===== */
+.dot-grid {
+  background-image: radial-gradient(circle, rgba(255,255,255,0.15) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #fde68a, #f9a8d4, #c4b5fd);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.card-lift {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.card-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px -8px rgba(79, 70, 229, 0.15);
+}
+
+@keyframes hero-float-a {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -30px) scale(1.05); }
+  66% { transform: translate(-20px, 20px) scale(0.97); }
+}
+@keyframes hero-float-b {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-25px, 20px) scale(0.95); }
+  66% { transform: translate(20px, -25px) scale(1.03); }
+}
+.orb-a { animation: hero-float-a 12s ease-in-out infinite; }
+.orb-b { animation: hero-float-b 15s ease-in-out infinite; }

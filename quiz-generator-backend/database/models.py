@@ -49,11 +49,13 @@ class UserScore(Base):
 
 class User(Base):
     __tablename__ = "users"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String(255), unique=True, index=True)
     username = Column(String(255))
     hashed_password = Column(String(255))
+    avatar_url = Column(String(500), nullable=True)
+    cover_url = Column(String(500), nullable=True)
     created_at = Column(
         TIMESTAMP,
         server_default=func.now(),
