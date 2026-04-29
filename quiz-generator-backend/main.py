@@ -8,6 +8,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import text
 
 from database.database import engine, Base
 from app.routers import quizzes, scores, generator, auth, editor, friends, notifications
@@ -19,12 +20,24 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+async def ensure_schema_compatibility():
+    """Backfill columns that may be missing on legacy production databases."""
+    async with engine.begin() as conn:
+        await conn.execute(text(
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url VARCHAR(500)"
+        ))
+        await conn.execute(text(
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS cover_url VARCHAR(500)"
+        ))
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
     logger.info("Starting up — creating database tables if needed")
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    await ensure_schema_compatibility()
     logger.info("Database tables ready")
     yield
     # Shutdown — dispose engine to release all pooled connections
