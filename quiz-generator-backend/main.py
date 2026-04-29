@@ -8,11 +8,10 @@ import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 
 from database.database import engine, Base
-from app.routers import quizzes, scores, generator, auth, editor, friends, notifications
+from app.routers import quizzes, scores, generator, auth, editor, friends, notifications, uploads
 
 logging.basicConfig(
     level=logging.INFO,
@@ -112,8 +111,6 @@ app.add_middleware(
 
 os.makedirs("/app/uploads/avatars", exist_ok=True)
 os.makedirs("/app/uploads/covers", exist_ok=True)
-app.mount("/uploads", StaticFiles(directory="/app/uploads"), name="uploads")
-app.mount("/api/uploads", StaticFiles(directory="/app/uploads"), name="api-uploads")
 
 API_PREFIX = "/api"
 
@@ -122,6 +119,7 @@ app.include_router(quizzes.router, prefix=API_PREFIX)
 app.include_router(scores.router, prefix=API_PREFIX)
 app.include_router(auth.router, prefix=API_PREFIX)
 app.include_router(editor.router, prefix=API_PREFIX)
+app.include_router(uploads.router)
 
 from app.routers import users
 app.include_router(users.router, prefix=API_PREFIX)
