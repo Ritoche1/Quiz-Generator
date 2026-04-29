@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 async def ensure_schema_compatibility():
-    """Backfill columns that may be missing on legacy production databases."""
+    """Backfill columns and normalize legacy types on older production databases."""
     async with engine.begin() as conn:
         await conn.execute(text(
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url VARCHAR(500)"
@@ -29,6 +29,39 @@ async def ensure_schema_compatibility():
         await conn.execute(text(
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS cover_url VARCHAR(500)"
         ))
+
+        db_url = os.getenv("DATABASE_URL", "")
+        if "sqlite" not in db_url:
+            result = await conn.execute(text(
+                """
+                SELECT data_type
+                FROM information_schema.columns
+                WHERE table_schema = current_schema()
+                  AND table_name = 'notifications'
+                  AND column_name = 'is_read'
+                """
+            ))
+            column_type = result.scalar_one_or_none()
+
+            if column_type and column_type != "boolean":
+                logger.warning(
+                    "Normalizing notifications.is_read from %s to boolean for legacy database compatibility",
+                    column_type,
+                )
+                await conn.execute(text(
+                    """
+                    ALTER TABLE notifications
+                    ALTER COLUMN is_read TYPE BOOLEAN
+                    USING CASE WHEN is_read = 1 THEN TRUE ELSE FALSE END
+                    """
+                ))
+
+            await conn.execute(text(
+                "ALTER TABLE notifications ALTER COLUMN is_read SET DEFAULT FALSE"
+            ))
+            await conn.execute(text(
+                "ALTER TABLE notifications ALTER COLUMN is_read SET NOT NULL"
+            ))
 
 
 @asynccontextmanager
