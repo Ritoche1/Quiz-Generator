@@ -12,7 +12,7 @@ services:
       - quiz-network
       - default
     environment:
-      - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL:-http://localhost:5000}
+      - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL:-http://localhost:5000/api}
       - VERSION=${VERSION:-1.0.0}
     restart: always
     healthcheck:

@@ -58,18 +58,20 @@ os.makedirs("/app/uploads/avatars", exist_ok=True)
 os.makedirs("/app/uploads/covers", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="/app/uploads"), name="uploads")
 
-app.include_router(generator.router)
-app.include_router(quizzes.router)
-app.include_router(scores.router)
-app.include_router(auth.router)
-app.include_router(editor.router)
+API_PREFIX = "/api"
+
+app.include_router(generator.router, prefix=API_PREFIX)
+app.include_router(quizzes.router, prefix=API_PREFIX)
+app.include_router(scores.router, prefix=API_PREFIX)
+app.include_router(auth.router, prefix=API_PREFIX)
+app.include_router(editor.router, prefix=API_PREFIX)
 
 from app.routers import users
-app.include_router(users.router)
+app.include_router(users.router, prefix=API_PREFIX)
 
 from app.routers import friends
-app.include_router(friends.router)
-app.include_router(notifications.router)
+app.include_router(friends.router, prefix=API_PREFIX)
+app.include_router(notifications.router, prefix=API_PREFIX)
 
 
 @app.get("/api/ping")
