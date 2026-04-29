@@ -2,7 +2,7 @@ import logging
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select, func
+from sqlalchemy import select, func, case
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.routers.auth import get_current_user
@@ -18,6 +18,19 @@ logger = logging.getLogger(__name__)
 @router.get("/", response_model=List[QuizResponse])
 async def fetch_all_quizzes(db: AsyncSession = Depends(get_db)):
     return await get_all_quizzes(db)
+
+
+@router.post("/", response_model=QuizResponse)
+async def create_quiz_endpoint(
+    quiz: QuizCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Create a new quiz from the editor UI."""
+    quiz_data = quiz.model_dump()
+    quiz_data["questions"] = [question.model_dump() for question in quiz.questions]
+    quiz_data["owner_id"] = current_user.id
+    return await create_quiz(db, quiz_data)
 
 @router.get("/count")
 async def get_quiz_count(db: AsyncSession = Depends(get_db)):
@@ -156,7 +169,7 @@ async def browse_public_quizzes(
                 UserScore.quiz_id,
                 func.count(UserScore.id).label("attempts"),
                 func.avg(
-                    func.case(
+                    case(
                         (UserScore.max_score > 0, UserScore.score * 100 / UserScore.max_score),
                         else_=0,
                     )
