@@ -103,6 +103,7 @@ app.add_middleware(
 os.makedirs("/app/uploads/avatars", exist_ok=True)
 os.makedirs("/app/uploads/covers", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="/app/uploads"), name="uploads")
+app.mount("/api/uploads", StaticFiles(directory="/app/uploads"), name="api-uploads")
 
 API_PREFIX = "/api"
 
