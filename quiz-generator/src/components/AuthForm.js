@@ -11,7 +11,7 @@ export default function AuthForm({ onLogin }) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}` : 'http://localhost:5000';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}` : 'http://localhost:5000/api';
 
   const handleSubmit = async (e) => {
     e.preventDefault();

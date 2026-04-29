@@ -42,7 +42,7 @@ pwd_context = CryptContext(
     schemes=["bcrypt_sha256", "bcrypt"],
     deprecated=["bcrypt"],
 )
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 
 class Token(BaseModel):
